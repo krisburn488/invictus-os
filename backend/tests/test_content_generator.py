@@ -10,6 +10,7 @@ from invictus_os.services.content_generator import (
     InvalidContentResponseError,
     MissingOpenAIAPIKeyError,
     OpenAIContentGenerator,
+    OpenAIQuotaError,
     OpenAIRateLimitError,
 )
 
@@ -45,10 +46,11 @@ def build_request(content_type: str = "post") -> ContentGenerationRequest:
     )
 
 
-def build_rate_limit_error() -> RateLimitError:
+def build_rate_limit_error(*, code: str | None = None) -> RateLimitError:
     request = httpx.Request("POST", "https://api.openai.com/v1/responses")
     response = httpx.Response(status_code=429, request=request)
-    return RateLimitError("rate limited", response=response, body=None)
+    body = {"error": {"code": code}} if code else None
+    return RateLimitError("rate limited", response=response, body=body)
 
 
 def test_openai_content_generator_returns_valid_content() -> None:
@@ -130,4 +132,18 @@ def test_openai_content_generator_reports_rate_limits() -> None:
     )
 
     with pytest.raises(OpenAIRateLimitError):
+        provider.generate(build_request())
+
+
+def test_openai_content_generator_reports_quota_errors() -> None:
+    provider = OpenAIContentGenerator(
+        api_key="test-key",
+        model="gpt-5.5",
+        timeout_seconds=30,
+        client=FakeClient(
+            FakeResponses(error=build_rate_limit_error(code="insufficient_quota"))
+        ),  # type: ignore[arg-type]
+    )
+
+    with pytest.raises(OpenAIQuotaError):
         provider.generate(build_request())

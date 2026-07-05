@@ -19,6 +19,13 @@ class OpenAIRateLimitError(ContentGenerationError):
     message = "OpenAI is rate limiting requests. Please wait a moment and try again."
 
 
+class OpenAIQuotaError(ContentGenerationError):
+    message = (
+        "OpenAI says this API key has no available quota. Check your OpenAI billing, plan, "
+        "or project limits, then try again."
+    )
+
+
 class OpenAINetworkError(ContentGenerationError):
     message = "InvictusOS could not reach OpenAI. Check your internet connection and try again."
 
@@ -30,6 +37,13 @@ class InvalidContentResponseError(ContentGenerationError):
 class ContentGenerator(Protocol):
     def generate(self, request: ContentGenerationRequest) -> GeneratedContentResponse:
         raise NotImplementedError
+
+
+def is_quota_error(exc: RateLimitError) -> bool:
+    body = getattr(exc, "body", None)
+    error = body.get("error") if isinstance(body, dict) else None
+    body_code = error.get("code") if isinstance(error, dict) else None
+    return getattr(exc, "code", None) == "insufficient_quota" or body_code == "insufficient_quota"
 
 
 class OpenAIContentGenerator:
@@ -75,6 +89,8 @@ class OpenAIContentGenerator:
                 ],
             )
         except RateLimitError as exc:
+            if is_quota_error(exc):
+                raise OpenAIQuotaError from exc
             raise OpenAIRateLimitError from exc
         except (APIConnectionError, APITimeoutError) as exc:
             raise OpenAINetworkError from exc

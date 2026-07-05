@@ -12,6 +12,7 @@ from invictus_os.services.content_generator import (
     MissingOpenAIAPIKeyError,
     OpenAIContentGenerator,
     OpenAINetworkError,
+    OpenAIQuotaError,
     OpenAIRateLimitError,
 )
 
@@ -48,6 +49,11 @@ def generate_content(request: ContentGenerationRequest) -> GeneratedContentRespo
     except OpenAIRateLimitError as exc:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=exc.message,
+        ) from exc
+    except OpenAIQuotaError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
             detail=exc.message,
         ) from exc
     except OpenAINetworkError as exc:
