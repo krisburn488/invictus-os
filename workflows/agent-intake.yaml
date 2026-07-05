@@ -1,0 +1,19 @@
+name: agent-intake
+version: 1
+description: Standard workflow for converting an operator request into an agent execution plan.
+stages:
+  - id: understand
+    agent: orchestrator
+    outcome: Structured objective and constraints
+  - id: plan
+    agent: orchestrator
+    outcome: Ordered agent and service assignments
+  - id: approve
+    agent: orchestrator
+    outcome: Approval request for sensitive execution paths
+  - id: execute
+    agent: assigned
+    outcome: Structured task result
+  - id: verify
+    agent: orchestrator
+    outcome: Evidence-backed final result

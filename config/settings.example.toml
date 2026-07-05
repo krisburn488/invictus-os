@@ -1,0 +1,17 @@
+[application]
+name = "InvictusOS"
+environment = "local"
+log_level = "INFO"
+
+[api]
+host = "127.0.0.1"
+port = 8000
+cors_origins = ["http://localhost:5173"]
+
+[agents]
+default_registry = "local"
+execution_timeout_seconds = 120
+
+[workflows]
+max_concurrent_runs = 4
+require_approval_for_external_actions = true
