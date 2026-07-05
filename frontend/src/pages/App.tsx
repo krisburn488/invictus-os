@@ -3,9 +3,13 @@ import { useMemo, useState } from "react";
 
 import { ActionButton } from "../components/ActionButton";
 import { ActivityFeed } from "../components/ActivityFeed";
+import { ContentGeneratorForm } from "../components/ContentGeneratorForm";
+import { GeneratedContentResults } from "../components/GeneratedContentResults";
 import { StatusPanel } from "../components/StatusPanel";
 import { WorkflowCard } from "../components/WorkflowCard";
 import { useAgents } from "../hooks/useAgents";
+import { contentGenerator } from "../services/contentGenerator";
+import type { ContentGenerationRequest, GeneratedContent } from "../types/content";
 import type { ActivityItem, WorkflowStep } from "../types/system";
 
 const actions = [
@@ -50,10 +54,21 @@ const startingActivity: ActivityItem[] = [
   },
 ];
 
+const defaultContentRequest: ContentGenerationRequest = {
+  businessName: "",
+  targetAudience: "",
+  topic: "",
+  platform: "instagram",
+  contentType: "post",
+};
+
 export function App() {
   const { agents, state } = useAgents();
   const [activeAction, setActiveAction] = useState("Choose a workflow action");
   const [activity, setActivity] = useState<ActivityItem[]>(startingActivity);
+  const [contentRequest, setContentRequest] =
+    useState<ContentGenerationRequest>(defaultContentRequest);
+  const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
 
   const workflowSteps = useMemo<WorkflowStep[]>(
     () =>
@@ -93,6 +108,20 @@ export function App() {
     ]);
   }
 
+  function openContentGenerator() {
+    setActiveAction("Generate Today's Content");
+  }
+
+  function handleGenerateContent(request: ContentGenerationRequest) {
+    const result = contentGenerator.generate(request);
+    setContentRequest(request);
+    setGeneratedContent(result);
+    handleAction(
+      "Generate Today's Content",
+      `Generated ${request.contentType} content for ${request.businessName} on ${request.topic}.`,
+    );
+  }
+
   return (
     <main className="app-shell">
       <section className="masthead">
@@ -119,7 +148,11 @@ export function App() {
                 description={action.description}
                 icon={action.icon}
                 key={action.title}
-                onClick={() => handleAction(action.title, action.detail)}
+                onClick={
+                  action.title === "Generate Today's Content"
+                    ? openContentGenerator
+                    : () => handleAction(action.title, action.detail)
+                }
                 title={action.title}
               />
             ))}
@@ -135,6 +168,13 @@ export function App() {
               workflow orchestration.
             </p>
           </div>
+          {activeAction === "Generate Today's Content" ? (
+            <ContentGeneratorForm
+              initialValue={contentRequest}
+              onSubmit={handleGenerateContent}
+            />
+          ) : null}
+          {generatedContent ? <GeneratedContentResults content={generatedContent} /> : null}
           <WorkflowCard steps={workflowSteps} />
           <ActivityFeed items={activity} />
         </section>

@@ -68,7 +68,9 @@ h1 {
 .action-panel,
 .workflow-card,
 .activity-feed,
-.current-focus {
+.current-focus,
+.generator-panel,
+.results-panel {
   border: 1px solid #d8ddd2;
   border-radius: 8px;
   background: #ffffff;
@@ -123,7 +125,9 @@ h1 {
 .action-panel,
 .workflow-card,
 .activity-feed,
-.current-focus {
+.current-focus,
+.generator-panel,
+.results-panel {
   padding: 22px;
 }
 
@@ -141,7 +145,9 @@ h1 {
 .action-list,
 .overview-panel,
 .workflow-steps,
-.activity-feed ol {
+.activity-feed ol,
+.content-form,
+.result-list {
   display: grid;
   gap: 12px;
 }
@@ -278,6 +284,117 @@ h1 {
   font-weight: 700;
 }
 
+.content-form label {
+  display: grid;
+  gap: 7px;
+  color: #172026;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.content-form input,
+.content-form select,
+.content-form textarea {
+  width: 100%;
+  border: 1px solid #d2dad4;
+  border-radius: 8px;
+  background: #fbfcf8;
+  color: #172026;
+  font: inherit;
+  line-height: 1.4;
+}
+
+.content-form input,
+.content-form select {
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+.content-form textarea {
+  resize: vertical;
+  padding: 11px 12px;
+}
+
+.content-form input:focus,
+.content-form select:focus,
+.content-form textarea:focus {
+  border-color: #2f6f73;
+  outline: 3px solid rgb(47 111 115 / 16%);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.primary-button,
+.copy-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+}
+
+.primary-button {
+  min-height: 46px;
+  padding: 0 18px;
+  background: #2f6f73;
+  color: #ffffff;
+}
+
+.primary-button:hover,
+.primary-button:focus-visible {
+  background: #24585c;
+  outline: none;
+}
+
+.result-section {
+  border: 1px solid #e1e6df;
+  border-radius: 8px;
+  background: #fbfcf8;
+  padding: 16px;
+}
+
+.result-section__header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.result-section h3 {
+  margin: 0;
+  color: #172026;
+  font-size: 1rem;
+}
+
+.result-section p {
+  margin-bottom: 0;
+  color: #425047;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.copy-button {
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 10px;
+  background: #eaf2ee;
+  color: #24585c;
+  font-size: 0.88rem;
+}
+
+.copy-button svg {
+  width: 16px;
+  height: 16px;
+}
+
 @media (max-width: 760px) {
   .app-shell {
     width: min(100% - 24px, 1120px);
@@ -291,5 +408,9 @@ h1 {
 
   h1 {
     font-size: 2.6rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
   }
 }
