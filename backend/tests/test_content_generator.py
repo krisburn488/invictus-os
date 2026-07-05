@@ -104,6 +104,41 @@ def test_openai_content_generator_requires_reel_script_for_reels() -> None:
         provider.generate(build_request(content_type="reel"))
 
 
+def test_openai_content_generator_normalizes_structured_reel_scripts() -> None:
+    provider = OpenAIContentGenerator(
+        api_key="test-key",
+        model="gpt-5.5",
+        timeout_seconds=30,
+        client=FakeClient(
+            FakeResponses(
+                json.dumps(
+                    {
+                        "post": "A complete post.",
+                        "reel_script": {
+                            "hook": "Annual visits can feel simple.",
+                            "scenes": [
+                                "Show a family arriving for a wellness visit.",
+                                "Share one preventive care benefit.",
+                            ],
+                            "closing_line": "Schedule with Invictus Health.",
+                        },
+                        "caption": "A caption.",
+                        "hashtags": ["#PreventiveCare", "#WellnessVisit"],
+                        "call_to_action": "Book today.",
+                    }
+                )
+            )
+        ),  # type: ignore[arg-type]
+    )
+
+    content = provider.generate(build_request(content_type="reel"))
+
+    assert content.reel_script is not None
+    assert "Hook: Annual visits can feel simple." in content.reel_script
+    assert "Scenes: Show a family arriving" in content.reel_script
+    assert "Closing Line: Schedule with Invictus Health." in content.reel_script
+
+
 def test_openai_content_generator_reports_missing_api_key() -> None:
     provider = OpenAIContentGenerator(api_key=None, model="gpt-5.5", timeout_seconds=30)
 

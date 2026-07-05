@@ -46,6 +46,29 @@ def is_quota_error(exc: RateLimitError) -> bool:
     return getattr(exc, "code", None) == "insufficient_quota" or body_code == "insufficient_quota"
 
 
+def stringify_content(value: object) -> str | None:
+    if value is None:
+        return None
+
+    if isinstance(value, str):
+        return value
+
+    if isinstance(value, list):
+        sections = [stringify_content(item) for item in value]
+        return "\n\n".join(section for section in sections if section)
+
+    if isinstance(value, dict):
+        lines: list[str] = []
+        for key, item in value.items():
+            section = stringify_content(item)
+            if section:
+                title = str(key).replace("_", " ").title()
+                lines.append(f"{title}: {section}")
+        return "\n\n".join(lines)
+
+    return str(value)
+
+
 class OpenAIContentGenerator:
     def __init__(
         self,
@@ -102,8 +125,15 @@ class OpenAIContentGenerator:
     def _parse_response(self, output_text: str, content_type: str) -> GeneratedContentResponse:
         try:
             payload = json.loads(output_text)
+            if not isinstance(payload, dict):
+                raise InvalidContentResponseError
+
+            payload["post"] = stringify_content(payload.get("post"))
+            payload["reel_script"] = stringify_content(payload.get("reel_script"))
+            payload["caption"] = stringify_content(payload.get("caption"))
+            payload["call_to_action"] = stringify_content(payload.get("call_to_action"))
             content = GeneratedContentResponse.model_validate(payload)
-        except (json.JSONDecodeError, TypeError, ValidationError) as exc:
+        except (json.JSONDecodeError, TypeError, ValidationError, InvalidContentResponseError) as exc:
             raise InvalidContentResponseError from exc
 
         if content_type != "reel":
