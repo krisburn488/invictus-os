@@ -1,69 +1,89 @@
 import type { ContentGenerationRequest, ContentGenerator, GeneratedContent } from "../types/content";
 
-const platformLabels = {
-  facebook: "Facebook",
-  instagram: "Instagram",
-  linkedin: "LinkedIn",
-  all: "Facebook, Instagram, and LinkedIn",
+type ApiGeneratedContent = {
+  post: string;
+  reel_script: string | null;
+  caption: string;
+  hashtags: string[];
+  call_to_action: string;
 };
 
-const contentTypeLabels = {
-  post: "post",
-  reel: "reel",
-  carousel: "carousel",
-  story: "story",
-};
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
-function hashtagize(value: string) {
-  return value
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 3)
-    .map((word) => word.replace(/[^a-zA-Z0-9]/g, ""))
-    .filter(Boolean)
-    .map((word) => `#${word.charAt(0).toUpperCase()}${word.slice(1)}`);
+function toApiRequest(request: ContentGenerationRequest) {
+  return {
+    business_name: request.businessName,
+    target_audience: request.targetAudience,
+    topic: request.topic,
+    platform: request.platform,
+    content_type: request.contentType,
+  };
 }
 
-function buildHashtags(request: ContentGenerationRequest) {
-  const businessTags = hashtagize(request.businessName);
-  const topicTags = hashtagize(request.topic);
-  const platformTag = request.platform === "all" ? "#SocialMedia" : `#${platformLabels[request.platform]}`;
-
-  return Array.from(
-    new Set([...businessTags, ...topicTags, platformTag, "#SmallBusiness", "#ContentMarketing"]),
-  ).slice(0, 8);
+function toGeneratedContent(content: ApiGeneratedContent): GeneratedContent {
+  return {
+    post: content.post,
+    reelScript: content.reel_script ?? undefined,
+    caption: content.caption,
+    hashtags: content.hashtags,
+    callToAction: content.call_to_action,
+  };
 }
 
-function buildReelScript(request: ContentGenerationRequest) {
-  return [
-    `Hook: "If ${request.targetAudience} care about ${request.topic}, this is for you."`,
-    `Scene 1: Show ${request.businessName} solving the main problem or desire around ${request.topic}.`,
-    `Scene 2: Share one quick tip, benefit, or behind-the-scenes detail that feels useful right away.`,
-    `Scene 3: Show the result your audience wants and keep the language simple and direct.`,
-    `On-screen text: "${request.topic} made simple by ${request.businessName}."`,
-    "Close: Invite viewers to comment, save, or send a message for the next step.",
-  ].join("\n\n");
+function isApiGeneratedContent(value: unknown): value is ApiGeneratedContent {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const content = value as Partial<ApiGeneratedContent>;
+
+  return (
+    typeof content.post === "string" &&
+    (typeof content.reel_script === "string" || content.reel_script === null) &&
+    typeof content.caption === "string" &&
+    Array.isArray(content.hashtags) &&
+    content.hashtags.every((hashtag) => typeof hashtag === "string") &&
+    typeof content.call_to_action === "string"
+  );
 }
 
-export class LocalContentGenerator implements ContentGenerator {
-  generate(request: ContentGenerationRequest): GeneratedContent {
-    const platform = platformLabels[request.platform];
-    const contentType = contentTypeLabels[request.contentType];
-    const hashtags = buildHashtags(request);
+function extractErrorMessage(value: unknown) {
+  if (value && typeof value === "object" && "detail" in value) {
+    const detail = (value as { detail: unknown }).detail;
+    return typeof detail === "string" ? detail : "InvictusOS could not generate content.";
+  }
 
-    return {
-      post: [
-        `${request.businessName} is helping ${request.targetAudience} make progress on ${request.topic}.`,
-        `Today's ${contentType} is built for ${platform}, with a clear message: you do not need to overcomplicate the next step.`,
-        `Here is the simple idea: focus on one useful action, one clear benefit, and one reason to act today.`,
-        `If ${request.topic} has been on your mind, ${request.businessName} can help you move from interest to action.`,
-      ].join("\n\n"),
-      reelScript: request.contentType === "reel" ? buildReelScript(request) : undefined,
-      caption: `${request.topic} does not have to feel complicated. ${request.businessName} helps ${request.targetAudience} take the next step with clarity and confidence.`,
-      hashtags,
-      callToAction: `Message ${request.businessName} today or comment "READY" to learn the next step.`,
-    };
+  return "InvictusOS could not generate content.";
+}
+
+export class OpenAIContentGenerator implements ContentGenerator {
+  async generate(request: ContentGenerationRequest): Promise<GeneratedContent> {
+    let response: Response;
+
+    try {
+      response = await fetch(`${apiBaseUrl}/content/generate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(toApiRequest(request)),
+      });
+    } catch {
+      throw new Error("InvictusOS could not reach the backend. Confirm the backend is running.");
+    }
+
+    const payload: unknown = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(extractErrorMessage(payload));
+    }
+
+    if (!isApiGeneratedContent(payload)) {
+      throw new Error("InvictusOS received an unexpected content response.");
+    }
+
+    return toGeneratedContent(payload);
   }
 }
 
-export const contentGenerator: ContentGenerator = new LocalContentGenerator();
+export const contentGenerator: ContentGenerator = new OpenAIContentGenerator();

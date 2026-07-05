@@ -129,7 +129,41 @@ pip install ".[dev]"
 
 This installs FastAPI and the other Python packages Invictus OS needs.
 
-## Step 6: Start the Backend
+## Step 6: Add Your OpenAI API Key
+
+Invictus OS uses OpenAI to generate the content drafts.
+
+Create your private backend settings file:
+
+```bash
+cp .env.example .env
+```
+
+This copies the example settings file to a real `.env` file. The `.env` file is where your private API key goes.
+
+Open the `.env` file in TextEdit:
+
+```bash
+open -a TextEdit .env
+```
+
+Replace this example line:
+
+```text
+OPENAI_API_KEY=sk-your-api-key-here
+```
+
+with your real OpenAI API key:
+
+```text
+OPENAI_API_KEY=sk-your-real-api-key
+```
+
+Save the file in TextEdit, then close TextEdit.
+
+Do not share your OpenAI API key or paste it into chat messages.
+
+## Step 7: Start the Backend
 
 Still in the `backend` folder, run:
 
@@ -147,7 +181,7 @@ If it worked, you should see something like:
 Uvicorn running on http://127.0.0.1:8000
 ```
 
-## Step 7: Open a Second Terminal Window
+## Step 8: Open a Second Terminal Window
 
 Do not close the backend Terminal window.
 
@@ -164,7 +198,7 @@ cd ~/Desktop/invictus-os
 
 If you downloaded the project somewhere other than your Desktop, use that folder path instead.
 
-## Step 8: Set Up the Frontend
+## Step 9: Set Up the Frontend
 
 Move into the frontend folder:
 
@@ -180,7 +214,7 @@ npm install
 
 This installs React, Vite, TypeScript, and the dashboard dependencies.
 
-## Step 9: Start the Frontend
+## Step 10: Start the Frontend
 
 Still in the `frontend` folder, run:
 
@@ -196,7 +230,7 @@ If it worked, you should see something like:
 Local: http://127.0.0.1:5173/
 ```
 
-## Step 10: Open Invictus OS in Your Browser
+## Step 11: Open Invictus OS in Your Browser
 
 Open this address in your browser:
 
@@ -217,6 +251,10 @@ If the backend is also running, the status should say:
 ```text
 API connected
 ```
+
+To test content generation, click `Generate Today's Content`, fill out the form, and click `Generate Content`.
+
+If you see a message about a missing OpenAI API key, go back to Step 6 and make sure `backend/.env` contains your real key. Then stop and restart the backend.
 
 ## How to Stop the App
 
@@ -259,21 +297,14 @@ Start the backend:
 uvicorn invictus_os.api.app:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
-Leave that Terminal window open.
-
-Open a second Terminal window and go to the frontend:
+Open a second Terminal window and start the frontend:
 
 ```bash
 cd ~/Desktop/invictus-os/frontend
-```
-
-Start the frontend:
-
-```bash
 npm run dev -- --host 127.0.0.1 --port 5173
 ```
 
-Open this address again:
+Open the app again:
 
 ```text
 http://127.0.0.1:5173/

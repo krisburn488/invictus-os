@@ -1,9 +1,19 @@
 from fastapi import APIRouter, HTTPException, status
 
 from invictus_os.agents.registry import build_agent_registry
+from invictus_os.config.settings import get_settings
 from invictus_os.schemas.agent import AgentRunRequest, AgentRunResponse, AgentSummary
+from invictus_os.schemas.content import ContentGenerationRequest, GeneratedContentResponse
 from invictus_os.schemas.health import HealthResponse
 from invictus_os.services.agent_service import AgentService
+from invictus_os.services.content_generator import (
+    ContentGenerationError,
+    InvalidContentResponseError,
+    MissingOpenAIAPIKeyError,
+    OpenAIContentGenerator,
+    OpenAINetworkError,
+    OpenAIRateLimitError,
+)
 
 router = APIRouter()
 agent_service = AgentService(registry=build_agent_registry())
@@ -20,6 +30,35 @@ def list_agents() -> list[AgentSummary]:
         AgentSummary(id=agent.id, name=agent.name, capabilities=agent.capabilities)
         for agent in agent_service.list_agents()
     ]
+
+
+@router.post("/content/generate", response_model=GeneratedContentResponse, tags=["content"])
+def generate_content(request: ContentGenerationRequest) -> GeneratedContentResponse:
+    settings = get_settings()
+    generator = OpenAIContentGenerator(
+        api_key=settings.openai_api_key,
+        model=settings.openai_model,
+        timeout_seconds=settings.openai_timeout_seconds,
+    )
+
+    try:
+        return generator.generate(request)
+    except MissingOpenAIAPIKeyError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message) from exc
+    except OpenAIRateLimitError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=exc.message,
+        ) from exc
+    except OpenAINetworkError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=exc.message,
+        ) from exc
+    except InvalidContentResponseError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=exc.message) from exc
+    except ContentGenerationError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=exc.message) from exc
 
 
 @router.post("/agents/{agent_id}/runs", response_model=AgentRunResponse, tags=["agents"])

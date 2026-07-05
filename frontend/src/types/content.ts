@@ -19,5 +19,5 @@ export type GeneratedContent = {
 };
 
 export type ContentGenerator = {
-  generate: (request: ContentGenerationRequest) => GeneratedContent;
+  generate: (request: ContentGenerationRequest) => Promise<GeneratedContent>;
 };

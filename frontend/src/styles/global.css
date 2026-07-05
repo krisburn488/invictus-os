@@ -70,7 +70,8 @@ h1 {
 .activity-feed,
 .current-focus,
 .generator-panel,
-.results-panel {
+.results-panel,
+.error-panel {
   border: 1px solid #d8ddd2;
   border-radius: 8px;
   background: #ffffff;
@@ -127,7 +128,8 @@ h1 {
 .activity-feed,
 .current-focus,
 .generator-panel,
-.results-panel {
+.results-panel,
+.error-panel {
   padding: 22px;
 }
 
@@ -351,6 +353,29 @@ h1 {
 .primary-button:focus-visible {
   background: #24585c;
   outline: none;
+}
+
+.primary-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.error-panel {
+  border-color: #dfb7b1;
+  background: #fff8f7;
+  padding: 16px;
+}
+
+.error-panel strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #8b2d24;
+}
+
+.error-panel p {
+  margin-bottom: 0;
+  color: #5e3733;
+  line-height: 1.5;
 }
 
 .result-section {

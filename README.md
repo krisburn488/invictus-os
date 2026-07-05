@@ -27,6 +27,7 @@ Dependencies point inward. Frameworks and infrastructure can change without rewr
 
 - **Backend:** Python 3.12, FastAPI, Pydantic Settings, Uvicorn
 - **Frontend:** React 18, TypeScript, Vite
+- **AI generation:** OpenAI Responses API using `gpt-5.5` by default
 - **Architecture:** Clean Architecture, typed ports, modular agents, explicit workflow definitions
 - **Quality:** Ruff, Pytest, strict TypeScript, production-oriented configuration
 
@@ -98,6 +99,8 @@ The backend registry resolves agents by identifier and executes them through a c
 ## Development Standards
 
 - Keep domain logic independent of FastAPI, React, databases, and model vendors.
+- Keep model provider integrations behind modular service interfaces so providers can be replaced.
+- Store API keys and secrets in environment variables only. Never commit real secrets.
 - Prefer typed request and response objects over unstructured dictionaries.
 - Treat prompts as versioned product assets.
 - Make automation auditable: every workflow should expose status, decisions, and results.
@@ -130,6 +133,20 @@ cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
+cp .env.example .env
+```
+
+Edit `backend/.env` and replace `sk-your-api-key-here` with your OpenAI API key:
+
+```bash
+OPENAI_API_KEY=sk-your-real-api-key
+INVICTUS_OPENAI_MODEL=gpt-5.5
+INVICTUS_OPENAI_TIMEOUT_SECONDS=30
+```
+
+Then start the backend:
+
+```bash
 uvicorn invictus_os.api.app:create_app --factory --reload
 ```
 
@@ -140,3 +157,6 @@ cd frontend
 npm install
 npm run dev
 ```
+
+The dashboard calls the FastAPI backend at `http://127.0.0.1:8000` by default. To point the
+frontend at a different backend, set `VITE_API_BASE_URL`.

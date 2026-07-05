@@ -12,6 +12,11 @@ cors_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
 default_registry = "local"
 execution_timeout_seconds = 120
 
+[openai]
+model = "gpt-5.5"
+api_key_environment_variable = "OPENAI_API_KEY"
+timeout_seconds = 30
+
 [workflows]
 max_concurrent_runs = 4
 require_approval_for_external_actions = true

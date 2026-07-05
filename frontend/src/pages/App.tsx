@@ -69,6 +69,8 @@ export function App() {
   const [contentRequest, setContentRequest] =
     useState<ContentGenerationRequest>(defaultContentRequest);
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
+  const [contentError, setContentError] = useState<string | null>(null);
+  const [isGeneratingContent, setIsGeneratingContent] = useState(false);
 
   const workflowSteps = useMemo<WorkflowStep[]>(
     () =>
@@ -112,14 +114,28 @@ export function App() {
     setActiveAction("Generate Today's Content");
   }
 
-  function handleGenerateContent(request: ContentGenerationRequest) {
-    const result = contentGenerator.generate(request);
+  async function handleGenerateContent(request: ContentGenerationRequest) {
     setContentRequest(request);
-    setGeneratedContent(result);
-    handleAction(
-      "Generate Today's Content",
-      `Generated ${request.contentType} content for ${request.businessName} on ${request.topic}.`,
-    );
+    setGeneratedContent(null);
+    setContentError(null);
+    setIsGeneratingContent(true);
+
+    try {
+      const result = await contentGenerator.generate(request);
+      setGeneratedContent(result);
+      handleAction(
+        "Generate Today's Content",
+        `Generated ${request.contentType} content for ${request.businessName} on ${request.topic}.`,
+      );
+    } catch (error) {
+      setContentError(
+        error instanceof Error
+          ? error.message
+          : "InvictusOS could not generate content. Please try again.",
+      );
+    } finally {
+      setIsGeneratingContent(false);
+    }
   }
 
   return (
@@ -171,8 +187,15 @@ export function App() {
           {activeAction === "Generate Today's Content" ? (
             <ContentGeneratorForm
               initialValue={contentRequest}
+              isGenerating={isGeneratingContent}
               onSubmit={handleGenerateContent}
             />
+          ) : null}
+          {contentError ? (
+            <section className="error-panel" role="alert">
+              <strong>Content generation needs attention</strong>
+              <p>{contentError}</p>
+            </section>
           ) : null}
           {generatedContent ? <GeneratedContentResults content={generatedContent} /> : null}
           <WorkflowCard steps={workflowSteps} />

@@ -2,6 +2,7 @@ import type { ContentGenerationRequest, ContentType, Platform } from "../types/c
 
 type ContentGeneratorFormProps = {
   initialValue: ContentGenerationRequest;
+  isGenerating?: boolean;
   onSubmit: (request: ContentGenerationRequest) => void;
 };
 
@@ -19,7 +20,11 @@ const contentTypes: { label: string; value: ContentType }[] = [
   { label: "Story", value: "story" },
 ];
 
-export function ContentGeneratorForm({ initialValue, onSubmit }: ContentGeneratorFormProps) {
+export function ContentGeneratorForm({
+  initialValue,
+  isGenerating = false,
+  onSubmit,
+}: ContentGeneratorFormProps) {
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -98,8 +103,8 @@ export function ContentGeneratorForm({ initialValue, onSubmit }: ContentGenerato
           </label>
         </div>
 
-        <button className="primary-button" type="submit">
-          Generate Content
+        <button className="primary-button" disabled={isGenerating} type="submit">
+          {isGenerating ? "Generating..." : "Generate Content"}
         </button>
       </form>
     </section>
