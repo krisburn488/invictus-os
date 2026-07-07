@@ -72,7 +72,10 @@ h1 {
 .generator-panel,
 .results-panel,
 .error-panel,
+.success-panel,
 .setup-panel,
+.schedule-preview-panel,
+.schedule-history-panel,
 .design-result-panel,
 .reel-result-panel {
   border: 1px solid #d8ddd2;
@@ -133,7 +136,10 @@ h1 {
 .generator-panel,
 .results-panel,
 .error-panel,
+.success-panel,
 .setup-panel,
+.schedule-preview-panel,
+.schedule-history-panel,
 .design-result-panel,
 .reel-result-panel {
   padding: 22px;
@@ -384,13 +390,35 @@ h1 {
   line-height: 1.5;
 }
 
+.success-panel {
+  border-color: #b8d9ce;
+  background: #f4fbf8;
+  padding: 16px;
+}
+
+.success-panel strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #247a52;
+}
+
+.success-panel p {
+  margin-bottom: 0;
+  color: #2f5546;
+  line-height: 1.5;
+}
+
 .setup-panel,
+.schedule-preview-panel,
+.schedule-history-panel,
 .design-result-panel,
 .reel-result-panel {
   padding: 16px;
 }
 
 .setup-panel strong,
+.schedule-preview-panel h3,
+.schedule-history-panel h3,
 .design-result-panel h3,
 .reel-result-panel h3 {
   display: block;
@@ -399,11 +427,43 @@ h1 {
 }
 
 .setup-panel p,
+.schedule-preview-panel p,
+.schedule-history-panel p,
 .design-result-panel p,
 .reel-result-panel p {
   margin-bottom: 0;
   color: #425047;
   line-height: 1.5;
+}
+
+.checkbox-row {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+}
+
+.checkbox-row input {
+  width: 18px;
+  min-height: 18px;
+}
+
+.history-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.history-card {
+  border: 1px solid #e1e6df;
+  border-radius: 8px;
+  background: #fbfcf8;
+  padding: 14px;
+}
+
+.history-card h4 {
+  margin: 0;
+  color: #172026;
+  font-size: 0.98rem;
 }
 
 .design-preview-grid {

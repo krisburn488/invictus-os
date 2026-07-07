@@ -178,3 +178,15 @@ The design system is built around Invictus Wellness branding: white backgrounds,
 accents, professional typography, strong hierarchy, and mobile-first composition. The backend design
 service is provider-neutral so a future Canva, Figma, or image-model provider can be added behind
 the same service boundary.
+
+### Local Scheduling
+
+The `Schedule Posts` workflow is a local scheduling system. It stores drafts, scheduled posts, and
+publish-now records in `backend/.local/scheduled_posts.json`, which is intentionally ignored by git.
+
+The scheduler can attach the content generated in the dashboard, generated graphic packages, captions,
+hashtags, and reel packages. It supports Facebook, Instagram, or both; image posts, carousels, and
+reels; scheduled date/time; publish-now records; and draft-only records.
+
+Meta publishing is not connected yet. The backend exposes a provider-neutral `ScheduleService` so a
+future Meta publishing adapter can be added without rewriting the dashboard workflow.

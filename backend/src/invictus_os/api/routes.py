@@ -7,6 +7,7 @@ from invictus_os.schemas.content import ContentGenerationRequest, GeneratedConte
 from invictus_os.schemas.design import DesignGraphicRequest, DesignGraphicResponse
 from invictus_os.schemas.health import HealthResponse
 from invictus_os.schemas.reel import ReelPackageRequest, ReelPackageResponse
+from invictus_os.schemas.schedule import SchedulePostRequest, ScheduledPost, ScheduledPostsResponse
 from invictus_os.services.agent_service import AgentService
 from invictus_os.services.content_generator import (
     ContentGenerationError,
@@ -19,6 +20,7 @@ from invictus_os.services.content_generator import (
 )
 from invictus_os.services.design_service import DesignService, DesignServiceError
 from invictus_os.services.reel_service import ReelService, ReelServiceError
+from invictus_os.services.schedule_service import ScheduleService, ScheduleServiceError
 
 router = APIRouter()
 agent_service = AgentService(registry=build_agent_registry())
@@ -86,6 +88,24 @@ def create_today_reel(request: ReelPackageRequest) -> ReelPackageResponse:
     try:
         return service.create_package(request)
     except ReelServiceError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=exc.message) from exc
+
+
+@router.get("/schedule/posts", response_model=ScheduledPostsResponse, tags=["schedule"])
+def list_scheduled_posts() -> ScheduledPostsResponse:
+    service = ScheduleService()
+    try:
+        return ScheduledPostsResponse(posts=service.list_posts())
+    except ScheduleServiceError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=exc.message) from exc
+
+
+@router.post("/schedule/posts", response_model=ScheduledPost, tags=["schedule"])
+def schedule_post(request: SchedulePostRequest) -> ScheduledPost:
+    service = ScheduleService()
+    try:
+        return service.schedule_post(request)
+    except ScheduleServiceError as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=exc.message) from exc
 
 

@@ -7,15 +7,18 @@ import { ContentGeneratorForm } from "../components/ContentGeneratorForm";
 import { DesignGraphicWorkflow } from "../components/DesignGraphicWorkflow";
 import { GeneratedContentResults } from "../components/GeneratedContentResults";
 import { ReelWorkflow } from "../components/ReelWorkflow";
+import { ScheduleWorkflow } from "../components/ScheduleWorkflow";
 import { StatusPanel } from "../components/StatusPanel";
 import { WorkflowCard } from "../components/WorkflowCard";
 import { useAgents } from "../hooks/useAgents";
 import { contentGenerator } from "../services/contentGenerator";
 import { createDesignGraphic } from "../services/design";
 import { createTodayReel } from "../services/reel";
+import { listScheduledPosts, schedulePost } from "../services/schedule";
 import type { ContentGenerationRequest, GeneratedContent } from "../types/content";
 import type { DesignGraphicResponse, GraphicType } from "../types/design";
 import type { ReelFormat, ReelPackage } from "../types/reel";
+import type { ScheduleContentType, SchedulePlatform, ScheduledPost } from "../types/schedule";
 import type { ActivityItem, WorkflowStep } from "../types/system";
 
 const actions = [
@@ -83,6 +86,11 @@ export function App() {
   const [reelResult, setReelResult] = useState<ReelPackage | null>(null);
   const [reelError, setReelError] = useState<string | null>(null);
   const [isCreatingReel, setIsCreatingReel] = useState(false);
+  const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
+  const [scheduleSuccess, setScheduleSuccess] = useState<string | null>(null);
+  const [isScheduling, setIsScheduling] = useState(false);
+  const [isLoadingSchedule, setIsLoadingSchedule] = useState(false);
 
   const workflowSteps = useMemo<WorkflowStep[]>(
     () =>
@@ -134,6 +142,12 @@ export function App() {
   function openReelWorkflow() {
     setActiveAction("Create Today's Reel");
     setReelError(null);
+  }
+
+  function openScheduleWorkflow() {
+    setActiveAction("Schedule Posts");
+    setScheduleError(null);
+    void loadScheduledPosts();
   }
 
   async function handleGenerateContent(request: ContentGenerationRequest) {
@@ -218,6 +232,58 @@ export function App() {
     }
   }
 
+  async function loadScheduledPosts() {
+    setIsLoadingSchedule(true);
+    try {
+      setScheduledPosts(await listScheduledPosts());
+    } catch (error) {
+      setScheduleError(
+        error instanceof Error
+          ? error.message
+          : "InvictusOS could not load scheduled posts. Please try again.",
+      );
+    } finally {
+      setIsLoadingSchedule(false);
+    }
+  }
+
+  async function handleSchedulePost(request: {
+    platform: SchedulePlatform;
+    contentType: ScheduleContentType;
+    scheduledFor?: string;
+    publishNow: boolean;
+    draftOnly: boolean;
+  }) {
+    if (!generatedContent) {
+      setScheduleError("Generate today's content before scheduling posts.");
+      return;
+    }
+
+    setScheduleError(null);
+    setScheduleSuccess(null);
+    setIsScheduling(true);
+
+    try {
+      const result = await schedulePost({
+        ...request,
+        content: generatedContent,
+        design: designResult ?? undefined,
+        reel: reelResult ?? undefined,
+      });
+      setScheduledPosts((posts) => [result, ...posts.filter((post) => post.id !== result.id)]);
+      setScheduleSuccess(`Saved ${formatScheduleStatus(result.status)} for ${formatPlatform(result.platform)}.`);
+      handleAction("Schedule Posts", `Saved ${formatContentType(result.contentType)} to local schedule history.`);
+    } catch (error) {
+      setScheduleError(
+        error instanceof Error
+          ? error.message
+          : "InvictusOS could not schedule the post. Please try again.",
+      );
+    } finally {
+      setIsScheduling(false);
+    }
+  }
+
   return (
     <main className="app-shell">
       <section className="masthead">
@@ -251,6 +317,8 @@ export function App() {
                       ? openReelWorkflow
                     : action.title === "Make Canva Graphic"
                       ? openDesignGraphic
+                    : action.title === "Schedule Posts"
+                      ? openScheduleWorkflow
                     : () => handleAction(action.title, action.detail)
                 }
                 title={action.title}
@@ -293,6 +361,19 @@ export function App() {
               result={reelResult}
             />
           ) : null}
+          {activeAction === "Schedule Posts" ? (
+            <ScheduleWorkflow
+              content={generatedContent}
+              design={designResult}
+              error={scheduleError}
+              history={scheduledPosts}
+              isLoadingHistory={isLoadingSchedule}
+              isScheduling={isScheduling}
+              onSubmit={handleSchedulePost}
+              reel={reelResult}
+              success={scheduleSuccess}
+            />
+          ) : null}
           {contentError ? (
             <section className="error-panel" role="alert">
               <strong>Content generation needs attention</strong>
@@ -314,4 +395,28 @@ function formatReelLabel(reelFormat: ReelFormat) {
     ai_avatar: "AI avatar",
     b_roll: "B-roll",
   }[reelFormat];
+}
+
+function formatPlatform(platform: SchedulePlatform) {
+  return {
+    facebook: "Facebook",
+    instagram: "Instagram",
+    both: "Facebook and Instagram",
+  }[platform];
+}
+
+function formatContentType(contentType: ScheduleContentType) {
+  return {
+    image_post: "image post",
+    carousel: "carousel",
+    reel: "reel",
+  }[contentType];
+}
+
+function formatScheduleStatus(status: ScheduledPost["status"]) {
+  return {
+    draft: "a draft",
+    scheduled: "a scheduled post",
+    ready_to_publish: "a local publish-now post",
+  }[status];
 }

@@ -272,6 +272,16 @@ To test content generation, click `Generate Today's Content`, fill out the form,
 
 To test graphics, generate content first, then click `Make Canva Graphic`. Choose `Single Post`, `Carousel`, or `Quote graphic`, then click `Create Canva Graphic`. When the preview appears, click `Download PNG`.
 
+To test scheduling, generate content first. For image posts or carousels, create a graphic. For reels, create today's reel. Then click `Schedule Posts`, choose the platform, content type, date/time or publish mode, and click `Save Schedule`.
+
+Scheduled posts are stored locally on your Mac in:
+
+```text
+backend/.local/scheduled_posts.json
+```
+
+Invictus OS does not publish to Facebook or Instagram yet. The schedule is saved locally so Meta publishing can be connected later.
+
 If you see a message about a missing OpenAI API key, go back to Step 6 and make sure `backend/.env` contains your real key. Then stop and restart the backend.
 
 ## How to Stop the App
