@@ -1,0 +1,61 @@
+{
+  "version": 2,
+  "installCommand": "cd frontend && npm install && cd ../backend && pip install -e .",
+  "buildCommand": "cd frontend && VITE_API_BASE_URL= npm run build",
+  "outputDirectory": "frontend/dist",
+  "env": {
+    "PYTHONPATH": "backend/src"
+  },
+  "functions": {
+    "backend/src/invictus_os/api/app.py": {
+      "runtime": "python3.12",
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/health",
+      "destination": "/backend/src/invictus_os/api/app.py"
+    },
+    {
+      "source": "/agents/:path*",
+      "destination": "/backend/src/invictus_os/api/app.py"
+    },
+    {
+      "source": "/content/:path*",
+      "destination": "/backend/src/invictus_os/api/app.py"
+    },
+    {
+      "source": "/design/:path*",
+      "destination": "/backend/src/invictus_os/api/app.py"
+    },
+    {
+      "source": "/reels/:path*",
+      "destination": "/backend/src/invictus_os/api/app.py"
+    },
+    {
+      "source": "/schedule/:path*",
+      "destination": "/backend/src/invictus_os/api/app.py"
+    },
+    {
+      "source": "/settings",
+      "destination": "/backend/src/invictus_os/api/app.py"
+    },
+    {
+      "source": "/docs",
+      "destination": "/backend/src/invictus_os/api/app.py"
+    },
+    {
+      "source": "/redoc",
+      "destination": "/backend/src/invictus_os/api/app.py"
+    },
+    {
+      "source": "/openapi.json",
+      "destination": "/backend/src/invictus_os/api/app.py"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/index.html"
+    }
+  ]
+}
