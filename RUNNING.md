@@ -282,6 +282,22 @@ backend/.local/scheduled_posts.json
 
 Invictus OS does not publish to Facebook or Instagram yet. The schedule is saved locally so Meta publishing can be connected later.
 
+To edit app settings, click `Settings`. You can enter provider credentials, brand details, and your business profile. The required fields are:
+
+- Business name
+- Default CTA
+- Posting schedule
+
+Sensitive fields such as OpenAI, Meta, and Higgsfield credentials are hidden after saving. The app will show whether each credential is configured, but it will not show the full secret again.
+
+Settings are stored locally on your Mac in:
+
+```text
+backend/.local/app_settings.json
+```
+
+Meta and Higgsfield settings are saved for future use. Invictus OS does not connect to Meta publishing yet.
+
 If you see a message about a missing OpenAI API key, go back to Step 6 and make sure `backend/.env` contains your real key. Then stop and restart the backend.
 
 ## How to Stop the App

@@ -411,6 +411,7 @@ h1 {
 .setup-panel,
 .schedule-preview-panel,
 .schedule-history-panel,
+.settings-section,
 .design-result-panel,
 .reel-result-panel {
   padding: 16px;
@@ -419,6 +420,7 @@ h1 {
 .setup-panel strong,
 .schedule-preview-panel h3,
 .schedule-history-panel h3,
+.settings-section h3,
 .design-result-panel h3,
 .reel-result-panel h3 {
   display: block;
@@ -429,11 +431,42 @@ h1 {
 .setup-panel p,
 .schedule-preview-panel p,
 .schedule-history-panel p,
+.settings-section p,
 .design-result-panel p,
 .reel-result-panel p {
   margin-bottom: 0;
   color: #425047;
   line-height: 1.5;
+}
+
+.settings-section {
+  display: grid;
+  gap: 12px;
+  border: 1px solid #e1e6df;
+  border-radius: 8px;
+  background: #fbfcf8;
+}
+
+.credential-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border: 1px solid #d8ddd2;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.credential-status strong {
+  color: #172026;
+}
+
+.credential-status span {
+  color: #5d6b5a;
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .checkbox-row {

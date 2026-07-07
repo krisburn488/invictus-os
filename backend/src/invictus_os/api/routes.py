@@ -8,6 +8,7 @@ from invictus_os.schemas.design import DesignGraphicRequest, DesignGraphicRespon
 from invictus_os.schemas.health import HealthResponse
 from invictus_os.schemas.reel import ReelPackageRequest, ReelPackageResponse
 from invictus_os.schemas.schedule import SchedulePostRequest, ScheduledPost, ScheduledPostsResponse
+from invictus_os.schemas.settings import AppSettingsResponse, AppSettingsUpdateRequest
 from invictus_os.services.agent_service import AgentService
 from invictus_os.services.content_generator import (
     ContentGenerationError,
@@ -21,6 +22,7 @@ from invictus_os.services.content_generator import (
 from invictus_os.services.design_service import DesignService, DesignServiceError
 from invictus_os.services.reel_service import ReelService, ReelServiceError
 from invictus_os.services.schedule_service import ScheduleService, ScheduleServiceError
+from invictus_os.services.settings_service import SettingsService, SettingsServiceError
 
 router = APIRouter()
 agent_service = AgentService(registry=build_agent_registry())
@@ -106,6 +108,24 @@ def schedule_post(request: SchedulePostRequest) -> ScheduledPost:
     try:
         return service.schedule_post(request)
     except ScheduleServiceError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=exc.message) from exc
+
+
+@router.get("/settings", response_model=AppSettingsResponse, tags=["settings"])
+def get_app_settings() -> AppSettingsResponse:
+    service = SettingsService()
+    try:
+        return service.get_settings()
+    except SettingsServiceError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=exc.message) from exc
+
+
+@router.put("/settings", response_model=AppSettingsResponse, tags=["settings"])
+def update_app_settings(request: AppSettingsUpdateRequest) -> AppSettingsResponse:
+    service = SettingsService()
+    try:
+        return service.update_settings(request)
+    except SettingsServiceError as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=exc.message) from exc
 
 

@@ -190,3 +190,17 @@ reels; scheduled date/time; publish-now records; and draft-only records.
 
 Meta publishing is not connected yet. The backend exposes a provider-neutral `ScheduleService` so a
 future Meta publishing adapter can be added without rewriting the dashboard workflow.
+
+### Local Settings
+
+The `Settings` page stores local provider, brand, and business profile configuration in
+`backend/.local/app_settings.json`, which is intentionally ignored by git.
+
+Settings currently include OpenAI, Meta, and Higgsfield credential fields; brand logo, colors, and
+fonts; and the business profile fields used by future automation: business name, website, booking
+URL, office phone, office address, accepted insurance list, default CTA, and posting schedule.
+
+Sensitive values are write-only from the dashboard. The API stores them locally but only returns
+configured status plus masked values, so API keys and app secrets are not sent back to the browser
+after saving. Meta and Higgsfield credentials are stored for future integrations and are not used
+for publishing yet.

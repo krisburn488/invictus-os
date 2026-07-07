@@ -1,4 +1,4 @@
-import { CalendarClock, Clapperboard, Image, PenLine, Sparkles } from "lucide-react";
+import { CalendarClock, Clapperboard, Image, PenLine, Settings, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { ActionButton } from "../components/ActionButton";
@@ -8,6 +8,7 @@ import { DesignGraphicWorkflow } from "../components/DesignGraphicWorkflow";
 import { GeneratedContentResults } from "../components/GeneratedContentResults";
 import { ReelWorkflow } from "../components/ReelWorkflow";
 import { ScheduleWorkflow } from "../components/ScheduleWorkflow";
+import { SettingsPage } from "../components/SettingsPage";
 import { StatusPanel } from "../components/StatusPanel";
 import { WorkflowCard } from "../components/WorkflowCard";
 import { useAgents } from "../hooks/useAgents";
@@ -15,10 +16,12 @@ import { contentGenerator } from "../services/contentGenerator";
 import { createDesignGraphic } from "../services/design";
 import { createTodayReel } from "../services/reel";
 import { listScheduledPosts, schedulePost } from "../services/schedule";
+import { getSettings, saveSettings } from "../services/settings";
 import type { ContentGenerationRequest, GeneratedContent } from "../types/content";
 import type { DesignGraphicResponse, GraphicType } from "../types/design";
 import type { ReelFormat, ReelPackage } from "../types/reel";
 import type { ScheduleContentType, SchedulePlatform, ScheduledPost } from "../types/schedule";
+import type { AppSettings, SettingsFormValue } from "../types/settings";
 import type { ActivityItem, WorkflowStep } from "../types/system";
 
 const actions = [
@@ -51,6 +54,12 @@ const actions = [
     description: "Organize publishing order.",
     icon: CalendarClock,
     detail: "InvictusOS arranged the content queue into a simple publishing schedule.",
+  },
+  {
+    title: "Settings",
+    description: "Configure providers and brand profile.",
+    icon: Settings,
+    detail: "InvictusOS opened local settings for provider, brand, and business profile configuration.",
   },
 ];
 
@@ -91,6 +100,11 @@ export function App() {
   const [scheduleSuccess, setScheduleSuccess] = useState<string | null>(null);
   const [isScheduling, setIsScheduling] = useState(false);
   const [isLoadingSchedule, setIsLoadingSchedule] = useState(false);
+  const [appSettings, setAppSettings] = useState<AppSettings | null>(null);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [settingsSuccess, setSettingsSuccess] = useState<string | null>(null);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   const workflowSteps = useMemo<WorkflowStep[]>(
     () =>
@@ -148,6 +162,13 @@ export function App() {
     setActiveAction("Schedule Posts");
     setScheduleError(null);
     void loadScheduledPosts();
+  }
+
+  function openSettingsPage() {
+    setActiveAction("Settings");
+    setSettingsError(null);
+    setSettingsSuccess(null);
+    void loadSettings();
   }
 
   async function handleGenerateContent(request: ContentGenerationRequest) {
@@ -284,6 +305,38 @@ export function App() {
     }
   }
 
+  async function loadSettings() {
+    setIsLoadingSettings(true);
+    try {
+      setAppSettings(await getSettings());
+    } catch (error) {
+      setSettingsError(
+        error instanceof Error ? error.message : "InvictusOS could not load settings. Please try again.",
+      );
+    } finally {
+      setIsLoadingSettings(false);
+    }
+  }
+
+  async function handleSaveSettings(value: SettingsFormValue) {
+    setSettingsError(null);
+    setSettingsSuccess(null);
+    setIsSavingSettings(true);
+
+    try {
+      const result = await saveSettings(value);
+      setAppSettings(result);
+      setSettingsSuccess("Local settings were saved.");
+      handleAction("Settings", "Updated local provider, brand, and business profile settings.");
+    } catch (error) {
+      setSettingsError(
+        error instanceof Error ? error.message : "InvictusOS could not save settings. Please try again.",
+      );
+    } finally {
+      setIsSavingSettings(false);
+    }
+  }
+
   return (
     <main className="app-shell">
       <section className="masthead">
@@ -319,6 +372,8 @@ export function App() {
                       ? openDesignGraphic
                     : action.title === "Schedule Posts"
                       ? openScheduleWorkflow
+                    : action.title === "Settings"
+                      ? openSettingsPage
                     : () => handleAction(action.title, action.detail)
                 }
                 title={action.title}
@@ -372,6 +427,16 @@ export function App() {
               onSubmit={handleSchedulePost}
               reel={reelResult}
               success={scheduleSuccess}
+            />
+          ) : null}
+          {activeAction === "Settings" ? (
+            <SettingsPage
+              error={settingsError}
+              isLoading={isLoadingSettings}
+              isSaving={isSavingSettings}
+              onSubmit={handleSaveSettings}
+              settings={appSettings}
+              success={settingsSuccess}
             />
           ) : null}
           {contentError ? (
