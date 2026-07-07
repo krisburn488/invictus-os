@@ -14,6 +14,9 @@ type SettingsPageProps = {
 
 const emptyFormValue: SettingsFormValue = {
   openaiApiKey: "",
+  openaiModel: "gpt-5.5",
+  openaiTemperature: 0.7,
+  openaiMaxOutputTokens: 1800,
   metaAppId: "",
   metaAppSecret: "",
   metaAccessToken: "",
@@ -58,6 +61,9 @@ export function SettingsPage({
 
     setFormValue({
       ...emptyFormValue,
+      openaiModel: settings.providers.openaiModel,
+      openaiTemperature: settings.providers.openaiTemperature,
+      openaiMaxOutputTokens: settings.providers.openaiMaxOutputTokens,
       brand: settings.brand,
       businessProfile: settings.businessProfile,
     });
@@ -115,6 +121,42 @@ export function SettingsPage({
               placeholder={settings?.providers.openaiApiKey.configured ? "Stored securely" : "sk-..."}
               type="password"
               value={formValue.openaiApiKey}
+            />
+          </label>
+          <div className="form-grid">
+            <label>
+              <span>OpenAI model</span>
+              <input
+                onChange={(event) => setFormValue({ ...formValue, openaiModel: event.target.value })}
+                required
+                value={formValue.openaiModel}
+              />
+            </label>
+            <label>
+              <span>Temperature</span>
+              <input
+                max="2"
+                min="0"
+                onChange={(event) =>
+                  setFormValue({ ...formValue, openaiTemperature: Number(event.target.value) })
+                }
+                step="0.1"
+                type="number"
+                value={formValue.openaiTemperature}
+              />
+            </label>
+          </div>
+          <label>
+            <span>Max output tokens</span>
+            <input
+              max="12000"
+              min="256"
+              onChange={(event) =>
+                setFormValue({ ...formValue, openaiMaxOutputTokens: Number(event.target.value) })
+              }
+              step="100"
+              type="number"
+              value={formValue.openaiMaxOutputTokens}
             />
           </label>
         </section>
@@ -415,6 +457,15 @@ function parseLines(value: string) {
 function validateSettings(value: SettingsFormValue) {
   if (!value.businessProfile.businessName.trim()) {
     return "Business name is required.";
+  }
+  if (!value.openaiModel.trim()) {
+    return "OpenAI model is required.";
+  }
+  if (value.openaiTemperature < 0 || value.openaiTemperature > 2) {
+    return "OpenAI temperature must be between 0 and 2.";
+  }
+  if (value.openaiMaxOutputTokens < 256) {
+    return "OpenAI max output tokens must be at least 256.";
   }
   if (!value.businessProfile.defaultCta.trim()) {
     return "Default CTA is required.";

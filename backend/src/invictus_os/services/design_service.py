@@ -9,6 +9,7 @@ from invictus_os.schemas.design import (
     GeneratedDesignCopy,
     GraphicType,
 )
+from invictus_os.services.openai_service import InvalidOpenAIResponseError, OpenAIService, OpenAIServiceError
 
 
 class DesignServiceError(Exception):
@@ -16,8 +17,11 @@ class DesignServiceError(Exception):
 
 
 class DesignService:
+    def __init__(self, *, openai_service: OpenAIService) -> None:
+        self._openai = openai_service
+
     def create_graphic(self, request: DesignGraphicRequest) -> DesignGraphicResponse:
-        extracted_content = extract_design_copy(request)
+        extracted_content = self.extract_design_copy(request)
         slides = build_design_slides(request.graphic_type, extracted_content)
 
         return DesignGraphicResponse(
@@ -27,6 +31,30 @@ class DesignService:
             message="InvictusOS created a finished 1080x1350 graphic ready for PNG download.",
             slides=slides,
         )
+
+    def extract_design_copy(self, request: DesignGraphicRequest) -> GeneratedDesignCopy:
+        try:
+            payload = self._openai.generate_json(
+                system_prompt=design_system_prompt(),
+                user_payload={
+                    "graphic_type": request.graphic_type,
+                    "content": request.content.model_dump(mode="json"),
+                    "brand": "Invictus Wellness",
+                    "dimensions": "1080x1350 portrait",
+                },
+                cache_namespace="design",
+            )
+            return GeneratedDesignCopy.model_validate(
+                {
+                    "headline": stringify_design_value(payload.get("headline")),
+                    "body_text": stringify_design_value(payload.get("body_text") or payload.get("body")),
+                    "call_to_action": stringify_design_value(
+                        payload.get("call_to_action") or request.content.call_to_action
+                    ),
+                }
+            )
+        except (InvalidOpenAIResponseError, OpenAIServiceError, ValueError, TypeError) as exc:
+            raise DesignServiceError from exc
 
 
 def extract_design_copy(request: DesignGraphicRequest) -> GeneratedDesignCopy:
@@ -38,6 +66,27 @@ def extract_design_copy(request: DesignGraphicRequest) -> GeneratedDesignCopy:
         headline=headline,
         body_text=body,
         call_to_action=truncate(clean_text(content.call_to_action), 140),
+    )
+
+
+def stringify_design_value(value: object) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return truncate(clean_text(value), 420)
+    return truncate(clean_text(str(value)), 420)
+
+
+def design_system_prompt() -> str:
+    return (
+        "You create structured graphic specifications for InvictusOS social graphics. "
+        "Use the provided generated content and produce concise copy for a finished "
+        "1080x1350 Instagram/Facebook graphic. Maintain Invictus Wellness branding: modern "
+        "healthcare aesthetic, white backgrounds, blue and green accents, professional "
+        "typography, strong hierarchy, mobile-first. Do not invent clinical claims. "
+        "Return only valid JSON with exactly these keys: headline, body_text, call_to_action. "
+        "headline should fit a mobile graphic. body_text should support the headline in one "
+        "or two short sentences. call_to_action should be direct and action oriented."
     )
 
 

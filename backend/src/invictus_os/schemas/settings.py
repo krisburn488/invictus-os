@@ -21,8 +21,25 @@ class ProviderCredentialUpdate(BaseModel):
         return stripped or None
 
 
+class OpenAISettingsUpdate(ProviderCredentialUpdate):
+    model: str = "gpt-5.5"
+    temperature: float = Field(default=0.7, ge=0, le=2)
+    max_output_tokens: int = Field(default=1800, ge=256, le=12000)
+
+    @field_validator("model")
+    @classmethod
+    def normalize_model(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("OpenAI model is required.")
+        return stripped
+
+
 class ProviderSettingsStatus(BaseModel):
     openai_api_key: SensitiveCredentialStatus
+    openai_model: str = "gpt-5.5"
+    openai_temperature: float = 0.7
+    openai_max_output_tokens: int = 1800
     meta_app_id: SensitiveCredentialStatus
     meta_app_secret: SensitiveCredentialStatus
     meta_access_token: SensitiveCredentialStatus
@@ -87,7 +104,7 @@ class AppSettingsResponse(BaseModel):
 
 
 class AppSettingsUpdateRequest(BaseModel):
-    openai: ProviderCredentialUpdate = Field(default_factory=ProviderCredentialUpdate)
+    openai: OpenAISettingsUpdate = Field(default_factory=OpenAISettingsUpdate)
     meta: ProviderCredentialUpdate = Field(default_factory=ProviderCredentialUpdate)
     higgsfield: ProviderCredentialUpdate = Field(default_factory=ProviderCredentialUpdate)
     brand: BrandSettings = Field(default_factory=BrandSettings)

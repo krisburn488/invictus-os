@@ -15,6 +15,8 @@ class ContentGenerationRequest(BaseModel):
 
 
 class GeneratedContentResponse(BaseModel):
+    headline: str | None = None
+    body: str | None = None
     post: str = Field(min_length=1)
     reel_script: str | None = None
     caption: str = Field(min_length=1)

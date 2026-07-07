@@ -27,7 +27,7 @@ Dependencies point inward. Frameworks and infrastructure can change without rewr
 
 - **Backend:** Python 3.12, FastAPI, Pydantic Settings, Uvicorn
 - **Frontend:** React 18, TypeScript, Vite
-- **AI generation:** OpenAI Responses API using `gpt-5.5` by default
+- **AI generation:** OpenAI Responses API using the model configured in Settings, `gpt-5.5` by default
 - **Design automation:** Internal AI-assisted graphic generator with SVG-to-PNG export
 - **Architecture:** Clean Architecture, typed ports, modular agents, explicit workflow definitions
 - **Quality:** Ruff, Pytest, strict TypeScript, production-oriented configuration
@@ -134,16 +134,15 @@ cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
-cp .env.example .env
 ```
 
-Edit `backend/.env` and replace `sk-your-api-key-here` with your OpenAI API key:
+OpenAI configuration is managed inside the dashboard, not `backend/.env`. Start the backend and
+frontend, open `Settings`, then configure:
 
-```bash
-OPENAI_API_KEY=sk-your-real-api-key
-INVICTUS_OPENAI_MODEL=gpt-5.5
-INVICTUS_OPENAI_TIMEOUT_SECONDS=30
-```
+- OpenAI API key
+- OpenAI model, such as `gpt-5.5`
+- Temperature for models that support it
+- Max output tokens
 
 Then start the backend:
 
@@ -204,3 +203,7 @@ Sensitive values are write-only from the dashboard. The API stores them locally 
 configured status plus masked values, so API keys and app secrets are not sent back to the browser
 after saving. Meta and Higgsfield credentials are stored for future integrations and are not used
 for publishing yet.
+
+OpenAI generation for content, graphic specifications, and reel packages reads credentials and model
+settings from this local Settings store. If no OpenAI key is configured, the dashboard shows a
+friendly setup message instead of crashing.

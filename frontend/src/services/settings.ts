@@ -3,6 +3,9 @@ import type { AppSettings, SettingsFormValue } from "../types/settings";
 type ApiAppSettings = {
   providers: {
     openai_api_key: ApiSensitiveCredentialStatus;
+    openai_model: string;
+    openai_temperature: number;
+    openai_max_output_tokens: number;
     meta_app_id: ApiSensitiveCredentialStatus;
     meta_app_secret: ApiSensitiveCredentialStatus;
     meta_access_token: ApiSensitiveCredentialStatus;
@@ -89,6 +92,9 @@ function toApiSettingsRequest(value: SettingsFormValue) {
   return {
     openai: {
       api_key: value.openaiApiKey || null,
+      model: value.openaiModel,
+      temperature: value.openaiTemperature,
+      max_output_tokens: value.openaiMaxOutputTokens,
     },
     meta: {
       app_id: value.metaAppId || null,
@@ -123,6 +129,9 @@ function toAppSettings(settings: ApiAppSettings): AppSettings {
   return {
     providers: {
       openaiApiKey: toCredentialStatus(settings.providers.openai_api_key),
+      openaiModel: settings.providers.openai_model,
+      openaiTemperature: settings.providers.openai_temperature,
+      openaiMaxOutputTokens: settings.providers.openai_max_output_tokens,
       metaAppId: toCredentialStatus(settings.providers.meta_app_id),
       metaAppSecret: toCredentialStatus(settings.providers.meta_app_secret),
       metaAccessToken: toCredentialStatus(settings.providers.meta_access_token),

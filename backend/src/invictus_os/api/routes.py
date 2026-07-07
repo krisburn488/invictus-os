@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 
 from invictus_os.agents.registry import build_agent_registry
-from invictus_os.config.settings import get_settings
 from invictus_os.schemas.agent import AgentRunRequest, AgentRunResponse, AgentSummary
 from invictus_os.schemas.content import ContentGenerationRequest, GeneratedContentResponse
 from invictus_os.schemas.design import DesignGraphicRequest, DesignGraphicResponse
@@ -13,13 +12,17 @@ from invictus_os.services.agent_service import AgentService
 from invictus_os.services.content_generator import (
     ContentGenerationError,
     InvalidContentResponseError,
-    MissingOpenAIAPIKeyError,
     OpenAIContentGenerator,
+)
+from invictus_os.services.design_service import DesignService, DesignServiceError
+from invictus_os.services.openai_service import (
+    InvalidOpenAIAPIKeyError,
+    MissingOpenAIAPIKeyError,
     OpenAINetworkError,
     OpenAIQuotaError,
     OpenAIRateLimitError,
+    OpenAIService,
 )
-from invictus_os.services.design_service import DesignService, DesignServiceError
 from invictus_os.services.reel_service import ReelService, ReelServiceError
 from invictus_os.services.schedule_service import ScheduleService, ScheduleServiceError
 from invictus_os.services.settings_service import SettingsService, SettingsServiceError
@@ -43,17 +46,14 @@ def list_agents() -> list[AgentSummary]:
 
 @router.post("/content/generate", response_model=GeneratedContentResponse, tags=["content"])
 def generate_content(request: ContentGenerationRequest) -> GeneratedContentResponse:
-    settings = get_settings()
-    generator = OpenAIContentGenerator(
-        api_key=settings.openai_api_key,
-        model=settings.openai_model,
-        timeout_seconds=settings.openai_timeout_seconds,
-    )
+    generator = OpenAIContentGenerator(openai_service=build_openai_service())
 
     try:
         return generator.generate(request)
     except MissingOpenAIAPIKeyError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message) from exc
+    except InvalidOpenAIAPIKeyError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=exc.message) from exc
     except OpenAIRateLimitError as exc:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -77,18 +77,38 @@ def generate_content(request: ContentGenerationRequest) -> GeneratedContentRespo
 
 @router.post("/design/graphics", response_model=DesignGraphicResponse, tags=["design"])
 def create_design_graphic(request: DesignGraphicRequest) -> DesignGraphicResponse:
-    service = DesignService()
+    service = DesignService(openai_service=build_openai_service())
     try:
         return service.create_graphic(request)
+    except MissingOpenAIAPIKeyError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message) from exc
+    except InvalidOpenAIAPIKeyError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=exc.message) from exc
+    except OpenAIRateLimitError as exc:
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=exc.message) from exc
+    except OpenAIQuotaError as exc:
+        raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail=exc.message) from exc
+    except OpenAINetworkError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=exc.message) from exc
     except DesignServiceError as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=exc.message) from exc
 
 
 @router.post("/reels/today", response_model=ReelPackageResponse, tags=["reels"])
 def create_today_reel(request: ReelPackageRequest) -> ReelPackageResponse:
-    service = ReelService()
+    service = ReelService(openai_service=build_openai_service())
     try:
         return service.create_package(request)
+    except MissingOpenAIAPIKeyError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message) from exc
+    except InvalidOpenAIAPIKeyError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=exc.message) from exc
+    except OpenAIRateLimitError as exc:
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=exc.message) from exc
+    except OpenAIQuotaError as exc:
+        raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail=exc.message) from exc
+    except OpenAINetworkError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=exc.message) from exc
     except ReelServiceError as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=exc.message) from exc
 
@@ -145,3 +165,8 @@ def run_agent(agent_id: str, request: AgentRunRequest) -> AgentRunResponse:
         summary=result.summary,
         evidence=result.evidence,
     )
+
+
+def build_openai_service() -> OpenAIService:
+    settings_service = SettingsService()
+    return OpenAIService(config=settings_service.get_openai_config())

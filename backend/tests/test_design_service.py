@@ -3,6 +3,20 @@ from invictus_os.schemas.content import GeneratedContentResponse
 from invictus_os.services.design_service import DesignService, extract_design_copy
 
 
+class FakeOpenAIService:
+    def generate_json(self, **kwargs: object) -> dict:
+        user_payload = kwargs.get("user_payload")
+        content = user_payload.get("content", {}) if isinstance(user_payload, dict) else {}
+        return {
+            "headline": content.get("headline")
+            or content.get("post")
+            or "Annual wellness visits help busy families stay proactive.",
+            "body_text": content.get("body")
+            or "Invictus Wellness makes preventive care easier to understand and act on.",
+            "call_to_action": content.get("call_to_action") or "Schedule your annual wellness visit today.",
+        }
+
+
 def build_request(graphic_type: str = "single") -> DesignGraphicRequest:
     return DesignGraphicRequest(
         graphic_type=graphic_type,
@@ -20,7 +34,7 @@ def build_request(graphic_type: str = "single") -> DesignGraphicRequest:
 
 
 def test_design_service_generates_single_graphic() -> None:
-    service = DesignService()
+    service = DesignService(openai_service=FakeOpenAIService())  # type: ignore[arg-type]
 
     response = service.create_graphic(build_request())
 
@@ -34,7 +48,7 @@ def test_design_service_generates_single_graphic() -> None:
 
 
 def test_design_service_generates_carousel_slides() -> None:
-    service = DesignService()
+    service = DesignService(openai_service=FakeOpenAIService())  # type: ignore[arg-type]
 
     response = service.create_graphic(build_request("carousel"))
 
@@ -67,7 +81,7 @@ def test_design_service_escapes_svg_text() -> None:
         ),
     )
 
-    response = DesignService().create_graphic(request)
+    response = DesignService(openai_service=FakeOpenAIService()).create_graphic(request)  # type: ignore[arg-type]
 
     assert "Use &lt;care&gt; &amp; prevention wisely." in response.slides[0].svg
     assert "Book &lt;today&gt; &amp; feel ready." in response.slides[0].svg

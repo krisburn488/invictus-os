@@ -1,37 +1,26 @@
-import json
 from typing import Protocol
 
-from openai import APIConnectionError, APITimeoutError, OpenAI, OpenAIError, RateLimitError
 from pydantic import ValidationError
 
 from invictus_os.schemas.content import ContentGenerationRequest, GeneratedContentResponse
+from invictus_os.services.openai_service import (
+    InvalidOpenAIAPIKeyError,
+    InvalidOpenAIResponseError,
+    MissingOpenAIAPIKeyError,
+    OpenAINetworkError,
+    OpenAIQuotaError,
+    OpenAIRateLimitError,
+    OpenAIService,
+    OpenAIServiceError,
+)
 
 
 class ContentGenerationError(Exception):
     message = "Content could not be generated right now."
 
 
-class MissingOpenAIAPIKeyError(ContentGenerationError):
-    message = "OpenAI API key is missing. Add OPENAI_API_KEY to backend/.env and restart the backend."
-
-
-class OpenAIRateLimitError(ContentGenerationError):
-    message = "OpenAI is rate limiting requests. Please wait a moment and try again."
-
-
-class OpenAIQuotaError(ContentGenerationError):
-    message = (
-        "OpenAI says this API key has no available quota. Check your OpenAI billing, plan, "
-        "or project limits, then try again."
-    )
-
-
-class OpenAINetworkError(ContentGenerationError):
-    message = "InvictusOS could not reach OpenAI. Check your internet connection and try again."
-
-
 class InvalidContentResponseError(ContentGenerationError):
-    message = "OpenAI returned an unexpected response. Please try generating the content again."
+    message = "OpenAI returned an unexpected content response. Please try generating again."
 
 
 class ContentGenerator(Protocol):
@@ -39,11 +28,49 @@ class ContentGenerator(Protocol):
         raise NotImplementedError
 
 
-def is_quota_error(exc: RateLimitError) -> bool:
-    body = getattr(exc, "body", None)
-    error = body.get("error") if isinstance(body, dict) else None
-    body_code = error.get("code") if isinstance(error, dict) else None
-    return getattr(exc, "code", None) == "insufficient_quota" or body_code == "insufficient_quota"
+class OpenAIContentGenerator:
+    def __init__(self, *, openai_service: OpenAIService) -> None:
+        self._openai = openai_service
+
+    def generate(self, request: ContentGenerationRequest) -> GeneratedContentResponse:
+        try:
+            payload = self._openai.generate_json(
+                system_prompt=content_system_prompt(),
+                user_payload={
+                    "business_name": request.business_name,
+                    "target_audience": request.target_audience,
+                    "topic": request.topic,
+                    "platform": request.platform,
+                    "content_type": request.content_type,
+                },
+                cache_namespace="content",
+            )
+            payload["post"] = stringify_content(payload.get("post"))
+            payload["reel_script"] = stringify_content(payload.get("reel_script"))
+            payload["caption"] = stringify_content(payload.get("caption"))
+            payload["call_to_action"] = stringify_content(payload.get("call_to_action"))
+            payload["headline"] = stringify_content(payload.get("headline"))
+            payload["body"] = stringify_content(payload.get("body"))
+            content = GeneratedContentResponse.model_validate(payload)
+        except (InvalidOpenAIResponseError, ValidationError, TypeError) as exc:
+            raise InvalidContentResponseError from exc
+        except (
+            MissingOpenAIAPIKeyError,
+            InvalidOpenAIAPIKeyError,
+            OpenAIRateLimitError,
+            OpenAIQuotaError,
+            OpenAINetworkError,
+        ):
+            raise
+        except OpenAIServiceError as exc:
+            raise ContentGenerationError from exc
+
+        if request.content_type != "reel":
+            content.reel_script = None
+        elif not content.reel_script:
+            raise InvalidContentResponseError
+
+        return content
 
 
 def stringify_content(value: object) -> str | None:
@@ -69,89 +96,18 @@ def stringify_content(value: object) -> str | None:
     return str(value)
 
 
-class OpenAIContentGenerator:
-    def __init__(
-        self,
-        *,
-        api_key: str | None,
-        model: str,
-        timeout_seconds: float,
-        client: OpenAI | None = None,
-    ) -> None:
-        self._api_key = api_key
-        self._model = model
-        self._timeout_seconds = timeout_seconds
-        self._client = client
-
-    def generate(self, request: ContentGenerationRequest) -> GeneratedContentResponse:
-        if not self._api_key:
-            raise MissingOpenAIAPIKeyError
-
-        client = self._client or OpenAI(api_key=self._api_key, timeout=self._timeout_seconds)
-
-        try:
-            response = client.responses.create(
-                model=self._model,
-                input=[
-                    {
-                        "role": "system",
-                        "content": self._system_prompt(),
-                    },
-                    {
-                        "role": "user",
-                        "content": json.dumps(
-                            {
-                                "business_name": request.business_name,
-                                "target_audience": request.target_audience,
-                                "topic": request.topic,
-                                "platform": request.platform,
-                                "content_type": request.content_type,
-                            }
-                        ),
-                    },
-                ],
-            )
-        except RateLimitError as exc:
-            if is_quota_error(exc):
-                raise OpenAIQuotaError from exc
-            raise OpenAIRateLimitError from exc
-        except (APIConnectionError, APITimeoutError) as exc:
-            raise OpenAINetworkError from exc
-        except OpenAIError as exc:
-            raise ContentGenerationError from exc
-
-        return self._parse_response(response.output_text, request.content_type)
-
-    def _parse_response(self, output_text: str, content_type: str) -> GeneratedContentResponse:
-        try:
-            payload = json.loads(output_text)
-            if not isinstance(payload, dict):
-                raise InvalidContentResponseError
-
-            payload["post"] = stringify_content(payload.get("post"))
-            payload["reel_script"] = stringify_content(payload.get("reel_script"))
-            payload["caption"] = stringify_content(payload.get("caption"))
-            payload["call_to_action"] = stringify_content(payload.get("call_to_action"))
-            content = GeneratedContentResponse.model_validate(payload)
-        except (json.JSONDecodeError, TypeError, ValidationError, InvalidContentResponseError) as exc:
-            raise InvalidContentResponseError from exc
-
-        if content_type != "reel":
-            content.reel_script = None
-        elif not content.reel_script:
-            raise InvalidContentResponseError
-
-        return content
-
-    def _system_prompt(self) -> str:
-        return (
-            "You generate professional healthcare marketing content for InvictusOS. "
-            "Write natural, engaging, evidence-informed copy for ethical healthcare promotion. "
-            "Do not invent statistics, clinical outcomes, credentials, testimonials, diagnoses, "
-            "or treatment guarantees. Avoid fear-based claims and unsafe medical advice. "
-            "Use clear, warm language appropriate for healthcare organizations and wellness "
-            "businesses. Return only valid JSON with exactly these keys: post, reel_script, "
-            "caption, hashtags, call_to_action. The hashtags value must be an array of strings. "
-            "If content_type is not reel, set reel_script to null. If content_type is reel, "
-            "include a complete reel script with hook, scenes, on-screen text, and closing line."
-        )
+def content_system_prompt() -> str:
+    return (
+        "You generate professional healthcare marketing content for InvictusOS. "
+        "Write natural, engaging, evidence-informed copy for ethical healthcare promotion. "
+        "Do not invent statistics, clinical outcomes, credentials, testimonials, diagnoses, "
+        "or treatment guarantees. Avoid fear-based claims and unsafe medical advice. "
+        "Maintain Invictus Wellness branding: modern, warm, professional, white-space friendly, "
+        "with blue and green wellness positioning. Return only valid JSON with exactly these keys: "
+        "headline, body, post, reel_script, caption, hashtags, call_to_action. "
+        "headline should be concise and graphic-ready. body should be a clear supporting message. "
+        "post should be a complete social media post. caption should be platform-ready. "
+        "hashtags must be an array of 5 to 12 relevant strings. call_to_action must be direct. "
+        "If content_type is not reel, set reel_script to null. If content_type is reel, include a "
+        "complete reel script with hook, scenes, on-screen text, and closing line."
+    )

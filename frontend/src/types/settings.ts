@@ -5,6 +5,9 @@ export type SensitiveCredentialStatus = {
 
 export type ProviderSettingsStatus = {
   openaiApiKey: SensitiveCredentialStatus;
+  openaiModel: string;
+  openaiTemperature: number;
+  openaiMaxOutputTokens: number;
   metaAppId: SensitiveCredentialStatus;
   metaAppSecret: SensitiveCredentialStatus;
   metaAccessToken: SensitiveCredentialStatus;
@@ -39,6 +42,9 @@ export type AppSettings = {
 
 export type SettingsFormValue = {
   openaiApiKey: string;
+  openaiModel: string;
+  openaiTemperature: number;
+  openaiMaxOutputTokens: number;
   metaAppId: string;
   metaAppSecret: string;
   metaAccessToken: string;

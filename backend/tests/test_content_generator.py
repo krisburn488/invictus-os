@@ -1,39 +1,19 @@
-import json
-
-import httpx
 import pytest
-from openai import RateLimitError
-from pydantic import BaseModel
 
 from invictus_os.schemas.content import ContentGenerationRequest
-from invictus_os.services.content_generator import (
-    InvalidContentResponseError,
-    MissingOpenAIAPIKeyError,
-    OpenAIContentGenerator,
-    OpenAIQuotaError,
-    OpenAIRateLimitError,
-)
+from invictus_os.services.content_generator import InvalidContentResponseError, OpenAIContentGenerator
+from invictus_os.services.openai_service import MissingOpenAIAPIKeyError
 
 
-class FakeResponse(BaseModel):
-    output_text: str
-
-
-class FakeResponses:
-    def __init__(self, output_text: str | None = None, error: Exception | None = None) -> None:
-        self.output_text = output_text
+class FakeOpenAIService:
+    def __init__(self, payload: dict | None = None, error: Exception | None = None) -> None:
+        self.payload = payload or {}
         self.error = error
 
-    def create(self, **_: object) -> FakeResponse:
+    def generate_json(self, **_: object) -> dict:
         if self.error:
             raise self.error
-
-        return FakeResponse(output_text=self.output_text or "")
-
-
-class FakeClient:
-    def __init__(self, responses: FakeResponses) -> None:
-        self.responses = responses
+        return self.payload
 
 
 def build_request(content_type: str = "post") -> ContentGenerationRequest:
@@ -46,35 +26,25 @@ def build_request(content_type: str = "post") -> ContentGenerationRequest:
     )
 
 
-def build_rate_limit_error(*, code: str | None = None) -> RateLimitError:
-    request = httpx.Request("POST", "https://api.openai.com/v1/responses")
-    response = httpx.Response(status_code=429, request=request)
-    body = {"error": {"code": code}} if code else None
-    return RateLimitError("rate limited", response=response, body=body)
-
-
 def test_openai_content_generator_returns_valid_content() -> None:
     provider = OpenAIContentGenerator(
-        api_key="test-key",
-        model="gpt-5.5",
-        timeout_seconds=30,
-        client=FakeClient(
-            FakeResponses(
-                json.dumps(
-                    {
-                        "post": "Annual wellness visits help families stay proactive.",
-                        "reel_script": None,
-                        "caption": "Make preventive care easier to prioritize.",
-                        "hashtags": ["#PreventiveCare", "#FamilyHealth"],
-                        "call_to_action": "Schedule a wellness visit today.",
-                    }
-                )
-            )
-        ),  # type: ignore[arg-type]
+        openai_service=FakeOpenAIService(
+            {
+                "headline": "Annual wellness visits",
+                "body": "Preventive care made simple.",
+                "post": "Annual wellness visits help families stay proactive.",
+                "reel_script": None,
+                "caption": "Make preventive care easier to prioritize.",
+                "hashtags": ["#PreventiveCare", "#FamilyHealth"],
+                "call_to_action": "Schedule a wellness visit today.",
+            }
+        )  # type: ignore[arg-type]
     )
 
     content = provider.generate(build_request())
 
+    assert content.headline == "Annual wellness visits"
+    assert content.body == "Preventive care made simple."
     assert content.post == "Annual wellness visits help families stay proactive."
     assert content.reel_script is None
     assert content.hashtags == ["#PreventiveCare", "#FamilyHealth"]
@@ -82,22 +52,17 @@ def test_openai_content_generator_returns_valid_content() -> None:
 
 def test_openai_content_generator_requires_reel_script_for_reels() -> None:
     provider = OpenAIContentGenerator(
-        api_key="test-key",
-        model="gpt-5.5",
-        timeout_seconds=30,
-        client=FakeClient(
-            FakeResponses(
-                json.dumps(
-                    {
-                        "post": "A short post.",
-                        "reel_script": None,
-                        "caption": "A caption.",
-                        "hashtags": ["#Health"],
-                        "call_to_action": "Book today.",
-                    }
-                )
-            )
-        ),  # type: ignore[arg-type]
+        openai_service=FakeOpenAIService(
+            {
+                "headline": "Annual wellness visits",
+                "body": "Preventive care made simple.",
+                "post": "A short post.",
+                "reel_script": None,
+                "caption": "A caption.",
+                "hashtags": ["#Health"],
+                "call_to_action": "Book today.",
+            }
+        )  # type: ignore[arg-type]
     )
 
     with pytest.raises(InvalidContentResponseError):
@@ -106,29 +71,24 @@ def test_openai_content_generator_requires_reel_script_for_reels() -> None:
 
 def test_openai_content_generator_normalizes_structured_reel_scripts() -> None:
     provider = OpenAIContentGenerator(
-        api_key="test-key",
-        model="gpt-5.5",
-        timeout_seconds=30,
-        client=FakeClient(
-            FakeResponses(
-                json.dumps(
-                    {
-                        "post": "A complete post.",
-                        "reel_script": {
-                            "hook": "Annual visits can feel simple.",
-                            "scenes": [
-                                "Show a family arriving for a wellness visit.",
-                                "Share one preventive care benefit.",
-                            ],
-                            "closing_line": "Schedule with Invictus Health.",
-                        },
-                        "caption": "A caption.",
-                        "hashtags": ["#PreventiveCare", "#WellnessVisit"],
-                        "call_to_action": "Book today.",
-                    }
-                )
-            )
-        ),  # type: ignore[arg-type]
+        openai_service=FakeOpenAIService(
+            {
+                "headline": "Annual wellness visits",
+                "body": "Preventive care made simple.",
+                "post": "A complete post.",
+                "reel_script": {
+                    "hook": "Annual visits can feel simple.",
+                    "scenes": [
+                        "Show a family arriving for a wellness visit.",
+                        "Share one preventive care benefit.",
+                    ],
+                    "closing_line": "Schedule with Invictus Health.",
+                },
+                "caption": "A caption.",
+                "hashtags": ["#PreventiveCare", "#WellnessVisit"],
+                "call_to_action": "Book today.",
+            }
+        )  # type: ignore[arg-type]
     )
 
     content = provider.generate(build_request(content_type="reel"))
@@ -140,45 +100,18 @@ def test_openai_content_generator_normalizes_structured_reel_scripts() -> None:
 
 
 def test_openai_content_generator_reports_missing_api_key() -> None:
-    provider = OpenAIContentGenerator(api_key=None, model="gpt-5.5", timeout_seconds=30)
+    provider = OpenAIContentGenerator(
+        openai_service=FakeOpenAIService(error=MissingOpenAIAPIKeyError())  # type: ignore[arg-type]
+    )
 
     with pytest.raises(MissingOpenAIAPIKeyError):
         provider.generate(build_request())
 
 
-def test_openai_content_generator_reports_invalid_json() -> None:
+def test_openai_content_generator_reports_invalid_payload() -> None:
     provider = OpenAIContentGenerator(
-        api_key="test-key",
-        model="gpt-5.5",
-        timeout_seconds=30,
-        client=FakeClient(FakeResponses("not json")),  # type: ignore[arg-type]
+        openai_service=FakeOpenAIService({"post": "Missing required fields."})  # type: ignore[arg-type]
     )
 
     with pytest.raises(InvalidContentResponseError):
-        provider.generate(build_request())
-
-
-def test_openai_content_generator_reports_rate_limits() -> None:
-    provider = OpenAIContentGenerator(
-        api_key="test-key",
-        model="gpt-5.5",
-        timeout_seconds=30,
-        client=FakeClient(FakeResponses(error=build_rate_limit_error())),  # type: ignore[arg-type]
-    )
-
-    with pytest.raises(OpenAIRateLimitError):
-        provider.generate(build_request())
-
-
-def test_openai_content_generator_reports_quota_errors() -> None:
-    provider = OpenAIContentGenerator(
-        api_key="test-key",
-        model="gpt-5.5",
-        timeout_seconds=30,
-        client=FakeClient(
-            FakeResponses(error=build_rate_limit_error(code="insufficient_quota"))
-        ),  # type: ignore[arg-type]
-    )
-
-    with pytest.raises(OpenAIQuotaError):
         provider.generate(build_request())

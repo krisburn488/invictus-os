@@ -56,6 +56,8 @@ export function GeneratedContentResults({ content }: GeneratedContentResultsProp
       </div>
 
       <div className="result-list">
+        {content.headline ? <CopySection title="Headline" text={content.headline} /> : null}
+        {content.body ? <CopySection title="Body" text={content.body} /> : null}
         <CopySection title="Social Media Post" text={content.post} />
         {content.reelScript ? <CopySection title="Reel Script" text={content.reelScript} /> : null}
         <CopySection title="Caption" text={content.caption} />

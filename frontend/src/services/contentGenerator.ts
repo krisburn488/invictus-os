@@ -1,6 +1,8 @@
 import type { ContentGenerationRequest, ContentGenerator, GeneratedContent } from "../types/content";
 
 type ApiGeneratedContent = {
+  headline?: string | null;
+  body?: string | null;
   post: string;
   reel_script: string | null;
   caption: string;
@@ -22,6 +24,8 @@ function toApiRequest(request: ContentGenerationRequest) {
 
 function toGeneratedContent(content: ApiGeneratedContent): GeneratedContent {
   return {
+    headline: content.headline ?? undefined,
+    body: content.body ?? undefined,
     post: content.post,
     reelScript: content.reel_script ?? undefined,
     caption: content.caption,

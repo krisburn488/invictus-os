@@ -129,39 +129,13 @@ pip install ".[dev]"
 
 This installs FastAPI and the other Python packages Invictus OS needs.
 
-## Step 6: Add Your OpenAI API Key
+## Step 6: OpenAI Setup Happens in the Dashboard
 
-Invictus OS uses OpenAI to generate the content drafts.
+Invictus OS uses OpenAI to generate content, graphic specifications, and reel packages.
 
-Create your private backend settings file:
+You do not need to put your OpenAI API key in `backend/.env`. The app now stores OpenAI settings from the dashboard Settings page.
 
-```bash
-cp .env.example .env
-```
-
-This copies the example settings file to a real `.env` file. The `.env` file is where your private API key goes.
-
-Open the `.env` file in TextEdit:
-
-```bash
-open -a TextEdit .env
-```
-
-Replace this example line:
-
-```text
-OPENAI_API_KEY=sk-your-api-key-here
-```
-
-with your real OpenAI API key:
-
-```text
-OPENAI_API_KEY=sk-your-real-api-key
-```
-
-Save the file in TextEdit, then close TextEdit.
-
-Do not share your OpenAI API key or paste it into chat messages.
+You will add your OpenAI API key after the backend and frontend are running.
 
 ## Step 7: Graphic Generation
 
@@ -268,6 +242,26 @@ If the backend is also running, the status should say:
 API connected
 ```
 
+Before testing content generation, click `Settings` and fill in:
+
+- OpenAI API key
+- OpenAI model, such as `gpt-5.5`
+- Temperature, such as `0.7`
+- Max output tokens, such as `2200`
+- Business name
+- Default CTA
+- Posting schedule
+
+Click `Save Settings`.
+
+The OpenAI API key is stored locally on your Mac in:
+
+```text
+backend/.local/app_settings.json
+```
+
+The dashboard will only show a masked version of the key after saving.
+
 To test content generation, click `Generate Today's Content`, fill out the form, and click `Generate Content`.
 
 To test graphics, generate content first, then click `Make Canva Graphic`. Choose `Single Post`, `Carousel`, or `Quote graphic`, then click `Create Canva Graphic`. When the preview appears, click `Download PNG`.
@@ -282,7 +276,7 @@ backend/.local/scheduled_posts.json
 
 Invictus OS does not publish to Facebook or Instagram yet. The schedule is saved locally so Meta publishing can be connected later.
 
-To edit app settings, click `Settings`. You can enter provider credentials, brand details, and your business profile. The required fields are:
+To edit app settings later, click `Settings`. You can enter provider credentials, brand details, and your business profile. The required fields are:
 
 - Business name
 - Default CTA
@@ -298,7 +292,7 @@ backend/.local/app_settings.json
 
 Meta and Higgsfield settings are saved for future use. Invictus OS does not connect to Meta publishing yet.
 
-If you see a message about a missing OpenAI API key, go back to Step 6 and make sure `backend/.env` contains your real key. Then stop and restart the backend.
+If you see a message about a missing OpenAI API key, click `Settings`, add your OpenAI API key, and click `Save Settings`. You do not need to restart the app after saving Settings.
 
 ## How to Stop the App
 

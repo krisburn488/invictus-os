@@ -11,6 +11,8 @@ export type ContentGenerationRequest = {
 };
 
 export type GeneratedContent = {
+  headline?: string;
+  body?: string;
   post: string;
   reelScript?: string;
   caption: string;

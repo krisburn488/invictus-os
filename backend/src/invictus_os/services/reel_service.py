@@ -1,11 +1,14 @@
 import re
 
+from pydantic import ValidationError
+
 from invictus_os.schemas.reel import (
     ReelFormat,
     ReelPackageRequest,
     ReelPackageResponse,
     ReelStoryboardScene,
 )
+from invictus_os.services.openai_service import InvalidOpenAIResponseError, OpenAIService, OpenAIServiceError
 
 
 class ReelServiceError(Exception):
@@ -13,26 +16,36 @@ class ReelServiceError(Exception):
 
 
 class ReelService:
-    def create_package(self, request: ReelPackageRequest) -> ReelPackageResponse:
-        content = request.content
-        hook = build_hook(content.post, content.caption)
-        key_message = build_key_message(content.post)
-        proof_point = build_proof_point(content.caption, content.post)
-        action = clean_text(content.call_to_action)
+    def __init__(self, *, openai_service: OpenAIService) -> None:
+        self._openai = openai_service
 
-        storyboard = build_storyboard(
-            reel_format=request.reel_format,
-            hook=hook,
-            key_message=key_message,
-            proof_point=proof_point,
-            action=action,
-        )
-        voice_over_script = " ".join(scene.voice_over for scene in storyboard)
-        script = build_script(storyboard)
-        on_screen_text = [scene.on_screen_text for scene in storyboard]
-        caption = build_caption(content.caption, action)
-        hashtags = normalize_hashtags(content.hashtags)
-        duration_seconds = sum(scene.duration_seconds for scene in storyboard)
+    def create_package(self, request: ReelPackageRequest) -> ReelPackageResponse:
+        try:
+            payload = self._openai.generate_json(
+                system_prompt=reel_system_prompt(),
+                user_payload={
+                    "reel_format": request.reel_format,
+                    "content": request.content.model_dump(mode="json"),
+                    "duration_requirement": "30 to 45 seconds",
+                    "brand": "Invictus Wellness",
+                },
+                cache_namespace="reel",
+            )
+            storyboard = [
+                ReelStoryboardScene.model_validate(scene)
+                for scene in payload.get("storyboard", [])
+            ]
+            hook = clean_text(str(payload.get("hook", "")))
+            script = clean_text(str(payload.get("script", "")))
+            voice_over_script = clean_text(str(payload.get("voice_over_script", "")))
+            caption = clean_text(str(payload.get("caption", "")))
+            hashtags = normalize_hashtags(payload.get("hashtags", []))
+            duration_seconds = int(payload.get("duration_seconds") or sum(scene.duration_seconds for scene in storyboard))
+            on_screen_text = payload.get("on_screen_text") or [scene.on_screen_text for scene in storyboard]
+            on_screen_text = [clean_text(str(item)) for item in on_screen_text if clean_text(str(item))]
+        except (InvalidOpenAIResponseError, OpenAIServiceError, ValidationError, TypeError, ValueError) as exc:
+            raise ReelServiceError from exc
+
         markdown = build_markdown(
             hook=hook,
             script=script,
@@ -45,18 +58,37 @@ class ReelService:
             duration_seconds=duration_seconds,
         )
 
-        return ReelPackageResponse(
-            hook=hook,
-            script=script,
-            storyboard=storyboard,
-            on_screen_text=on_screen_text,
-            voice_over_script=voice_over_script,
-            caption=caption,
-            hashtags=hashtags,
-            reel_format=request.reel_format,
-            duration_seconds=duration_seconds,
-            markdown=markdown,
-        )
+        try:
+            return ReelPackageResponse(
+                hook=hook,
+                script=script,
+                storyboard=storyboard,
+                on_screen_text=on_screen_text,
+                voice_over_script=voice_over_script,
+                caption=caption,
+                hashtags=hashtags,
+                reel_format=request.reel_format,
+                duration_seconds=duration_seconds,
+                markdown=markdown,
+            )
+        except ValidationError as exc:
+            raise ReelServiceError from exc
+
+
+def reel_system_prompt() -> str:
+    return (
+        "You create complete healthcare social media reel packages for InvictusOS. "
+        "Generate a professional 30 to 45 second reel using the provided content. "
+        "Maintain Invictus Wellness branding: modern healthcare aesthetic, white backgrounds, "
+        "blue and green accents, clean typography, warm trustworthy tone, mobile-first 9:16 framing. "
+        "Do not invent clinical statistics, outcomes, testimonials, or medical guarantees. "
+        "Return only valid JSON with exactly these keys: hook, script, storyboard, on_screen_text, "
+        "voice_over_script, caption, hashtags, duration_seconds. storyboard must contain 4 scenes. "
+        "Each storyboard scene must include scene_number, duration_seconds, visual_direction, "
+        "on_screen_text, voice_over, and higgsfield_prompt. Each Higgsfield prompt must be ready "
+        "for vertical 9:16 video generation and mention Invictus Wellness visual branding. "
+        "duration_seconds must be between 30 and 45."
+    )
 
 
 def build_hook(post: str, caption: str) -> str:
@@ -210,7 +242,9 @@ def build_markdown(
     )
 
 
-def normalize_hashtags(hashtags: list[str]) -> list[str]:
+def normalize_hashtags(hashtags: object) -> list[str]:
+    if not isinstance(hashtags, list):
+        hashtags = []
     normalized = []
     for hashtag in hashtags[:12]:
         value = clean_text(hashtag)

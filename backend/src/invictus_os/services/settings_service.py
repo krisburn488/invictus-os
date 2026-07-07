@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 import json
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,14 @@ from invictus_os.schemas.settings import (
     ProviderSettingsStatus,
     SensitiveCredentialStatus,
 )
+
+
+@dataclass(frozen=True)
+class OpenAIServiceConfig:
+    api_key: str
+    model: str
+    temperature: float
+    max_output_tokens: int
 
 
 class SettingsServiceError(Exception):
@@ -56,6 +65,16 @@ class SettingsService:
     def get_settings(self) -> AppSettingsResponse:
         return build_response(self._repository.load())
 
+    def get_openai_config(self) -> OpenAIServiceConfig:
+        payload = self._repository.load()
+        openai = payload["openai"]
+        return OpenAIServiceConfig(
+            api_key=payload["credentials"]["openai_api_key"],
+            model=openai["model"],
+            temperature=openai["temperature"],
+            max_output_tokens=openai["max_output_tokens"],
+        )
+
     def update_settings(self, request: AppSettingsUpdateRequest) -> AppSettingsResponse:
         current = self._repository.load()
         updated = {
@@ -78,6 +97,11 @@ class SettingsService:
                     current["credentials"]["higgsfield_api_key"],
                 ),
             },
+            "openai": {
+                "model": request.openai.model,
+                "temperature": request.openai.temperature,
+                "max_output_tokens": request.openai.max_output_tokens,
+            },
             "brand": json.loads(request.brand.model_dump_json()),
             "business_profile": json.loads(request.business_profile.model_dump_json()),
         }
@@ -99,6 +123,11 @@ def default_settings_payload() -> dict[str, Any]:
             "meta_app_secret": "",
             "meta_access_token": "",
             "higgsfield_api_key": "",
+        },
+        "openai": {
+            "model": "gpt-5.5",
+            "temperature": 0.7,
+            "max_output_tokens": 1800,
         },
         "brand": json.loads(BrandSettings().model_dump_json()),
         "business_profile": json.loads(BusinessProfileSettings().model_dump_json()),
@@ -125,6 +154,9 @@ def build_response(payload: dict[str, Any]) -> AppSettingsResponse:
     return AppSettingsResponse(
         providers=ProviderSettingsStatus(
             openai_api_key=credential_status(credentials["openai_api_key"]),
+            openai_model=payload["openai"]["model"],
+            openai_temperature=payload["openai"]["temperature"],
+            openai_max_output_tokens=payload["openai"]["max_output_tokens"],
             meta_app_id=credential_status(credentials["meta_app_id"]),
             meta_app_secret=credential_status(credentials["meta_app_secret"]),
             meta_access_token=credential_status(credentials["meta_access_token"]),
