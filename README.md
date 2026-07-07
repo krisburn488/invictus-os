@@ -161,6 +161,30 @@ npm run dev
 The dashboard calls the FastAPI backend at `http://127.0.0.1:8000` by default. To point the
 frontend at a different backend, set `VITE_API_BASE_URL`.
 
+## Vercel Deployment
+
+InvictusOS can be deployed as two separate Vercel projects from the same repository:
+
+- **frontend:** set the Vercel project root directory to `frontend`
+- **backend:** set the Vercel project root directory to `backend`
+
+The frontend is a Vite app and reads the backend URL from `VITE_API_BASE_URL`. In the frontend
+Vercel project, set `VITE_API_BASE_URL` to the deployed backend project URL, for example:
+
+```text
+https://your-backend-project.vercel.app
+```
+
+The backend is a FastAPI app. Its Vercel entrypoint is declared in `backend/pyproject.toml` as:
+
+```toml
+[tool.vercel]
+entrypoint = "invictus_os.api.app:app"
+```
+
+This tells Vercel how to find the FastAPI `app` instance when `backend` is deployed as its own
+project root.
+
 ### Graphic Generation
 
 The `Make Canva Graphic` workflow uses the generated content from `Generate Today's Content` and
