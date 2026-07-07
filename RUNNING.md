@@ -163,7 +163,39 @@ Save the file in TextEdit, then close TextEdit.
 
 Do not share your OpenAI API key or paste it into chat messages.
 
-## Step 7: Start the Backend
+## Step 7: Optional Canva Setup
+
+Invictus OS can also create Canva graphics from the content you generate.
+
+This part is optional. If you skip it, the app will still run and will show a friendly Canva setup message when you click `Make Canva Graphic`.
+
+To connect Canva, your Canva integration needs an OAuth access token and a Brand Template ID. The Brand Template should be a 1080x1350 portrait design with these autofill text fields:
+
+- `HEADLINE`
+- `BODY_TEXT`
+- `CALL_TO_ACTION`
+- `GRAPHIC_TYPE`
+
+Open the backend `.env` file again:
+
+```bash
+open -a TextEdit .env
+```
+
+Add these lines, replacing the example values with your Canva values:
+
+```text
+CANVA_ACCESS_TOKEN=your-canva-oauth-access-token
+CANVA_BRAND_TEMPLATE_ID=your-canva-brand-template-id
+INVICTUS_CANVA_HEADLINE_FIELD=HEADLINE
+INVICTUS_CANVA_BODY_FIELD=BODY_TEXT
+INVICTUS_CANVA_CTA_FIELD=CALL_TO_ACTION
+INVICTUS_CANVA_GRAPHIC_TYPE_FIELD=GRAPHIC_TYPE
+```
+
+Save the file, then close TextEdit.
+
+## Step 8: Start the Backend
 
 Still in the `backend` folder, run:
 
@@ -181,7 +213,7 @@ If it worked, you should see something like:
 Uvicorn running on http://127.0.0.1:8000
 ```
 
-## Step 8: Open a Second Terminal Window
+## Step 9: Open a Second Terminal Window
 
 Do not close the backend Terminal window.
 
@@ -198,7 +230,7 @@ cd ~/Desktop/invictus-os
 
 If you downloaded the project somewhere other than your Desktop, use that folder path instead.
 
-## Step 9: Set Up the Frontend
+## Step 10: Set Up the Frontend
 
 Move into the frontend folder:
 
@@ -214,7 +246,7 @@ npm install
 
 This installs React, Vite, TypeScript, and the dashboard dependencies.
 
-## Step 10: Start the Frontend
+## Step 11: Start the Frontend
 
 Still in the `frontend` folder, run:
 
@@ -230,7 +262,7 @@ If it worked, you should see something like:
 Local: http://127.0.0.1:5173/
 ```
 
-## Step 11: Open Invictus OS in Your Browser
+## Step 12: Open Invictus OS in Your Browser
 
 Open this address in your browser:
 
@@ -253,6 +285,8 @@ API connected
 ```
 
 To test content generation, click `Generate Today's Content`, fill out the form, and click `Generate Content`.
+
+To test Canva graphics, generate content first, then click `Make Canva Graphic`. If Canva is not connected, the app will explain which Canva settings are missing.
 
 If you see a message about a missing OpenAI API key, go back to Step 6 and make sure `backend/.env` contains your real key. Then stop and restart the backend.
 

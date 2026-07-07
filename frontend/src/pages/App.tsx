@@ -3,12 +3,15 @@ import { useMemo, useState } from "react";
 
 import { ActionButton } from "../components/ActionButton";
 import { ActivityFeed } from "../components/ActivityFeed";
+import { CanvaGraphicWorkflow } from "../components/CanvaGraphicWorkflow";
 import { ContentGeneratorForm } from "../components/ContentGeneratorForm";
 import { GeneratedContentResults } from "../components/GeneratedContentResults";
 import { StatusPanel } from "../components/StatusPanel";
 import { WorkflowCard } from "../components/WorkflowCard";
 import { useAgents } from "../hooks/useAgents";
+import { createCanvaGraphic } from "../services/canva";
 import { contentGenerator } from "../services/contentGenerator";
+import type { CanvaGraphicResponse, CanvaGraphicType } from "../types/canva";
 import type { ContentGenerationRequest, GeneratedContent } from "../types/content";
 import type { ActivityItem, WorkflowStep } from "../types/system";
 
@@ -71,6 +74,9 @@ export function App() {
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
   const [contentError, setContentError] = useState<string | null>(null);
   const [isGeneratingContent, setIsGeneratingContent] = useState(false);
+  const [canvaResult, setCanvaResult] = useState<CanvaGraphicResponse | null>(null);
+  const [canvaError, setCanvaError] = useState<string | null>(null);
+  const [isCreatingCanvaGraphic, setIsCreatingCanvaGraphic] = useState(false);
 
   const workflowSteps = useMemo<WorkflowStep[]>(
     () =>
@@ -114,6 +120,11 @@ export function App() {
     setActiveAction("Generate Today's Content");
   }
 
+  function openCanvaGraphic() {
+    setActiveAction("Make Canva Graphic");
+    setCanvaError(null);
+  }
+
   async function handleGenerateContent(request: ContentGenerationRequest) {
     setContentRequest(request);
     setGeneratedContent(null);
@@ -135,6 +146,36 @@ export function App() {
       );
     } finally {
       setIsGeneratingContent(false);
+    }
+  }
+
+  async function handleCreateCanvaGraphic(graphicType: CanvaGraphicType) {
+    if (!generatedContent) {
+      setCanvaError("Generate today's content first, then create a Canva graphic.");
+      return;
+    }
+
+    setCanvaError(null);
+    setCanvaResult(null);
+    setIsCreatingCanvaGraphic(true);
+
+    try {
+      const result = await createCanvaGraphic({ content: generatedContent, graphicType });
+      setCanvaResult(result);
+      handleAction(
+        "Make Canva Graphic",
+        result.status === "created"
+          ? `Created a ${graphicType} Canva graphic from today's content.`
+          : result.message,
+      );
+    } catch (error) {
+      setCanvaError(
+        error instanceof Error
+          ? error.message
+          : "InvictusOS could not create the Canva graphic. Please try again.",
+      );
+    } finally {
+      setIsCreatingCanvaGraphic(false);
     }
   }
 
@@ -167,6 +208,8 @@ export function App() {
                 onClick={
                   action.title === "Generate Today's Content"
                     ? openContentGenerator
+                    : action.title === "Make Canva Graphic"
+                      ? openCanvaGraphic
                     : () => handleAction(action.title, action.detail)
                 }
                 title={action.title}
@@ -189,6 +232,15 @@ export function App() {
               initialValue={contentRequest}
               isGenerating={isGeneratingContent}
               onSubmit={handleGenerateContent}
+            />
+          ) : null}
+          {activeAction === "Make Canva Graphic" ? (
+            <CanvaGraphicWorkflow
+              content={generatedContent}
+              error={canvaError}
+              isCreating={isCreatingCanvaGraphic}
+              onSubmit={handleCreateCanvaGraphic}
+              result={canvaResult}
             />
           ) : null}
           {contentError ? (

@@ -71,7 +71,9 @@ h1 {
 .current-focus,
 .generator-panel,
 .results-panel,
-.error-panel {
+.error-panel,
+.setup-panel,
+.canva-result-panel {
   border: 1px solid #d8ddd2;
   border-radius: 8px;
   background: #ffffff;
@@ -129,7 +131,9 @@ h1 {
 .current-focus,
 .generator-panel,
 .results-panel,
-.error-panel {
+.error-panel,
+.setup-panel,
+.canva-result-panel {
   padding: 22px;
 }
 
@@ -376,6 +380,60 @@ h1 {
   margin-bottom: 0;
   color: #5e3733;
   line-height: 1.5;
+}
+
+.setup-panel,
+.canva-result-panel {
+  padding: 16px;
+}
+
+.setup-panel strong,
+.canva-result-panel h3 {
+  display: block;
+  margin: 0 0 6px;
+  color: #172026;
+}
+
+.setup-panel p,
+.canva-result-panel p {
+  margin-bottom: 0;
+  color: #425047;
+  line-height: 1.5;
+}
+
+.copy-preview-list {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 0;
+}
+
+.copy-preview-list div {
+  display: grid;
+  gap: 4px;
+}
+
+.copy-preview-list dt {
+  color: #5d6b5a;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.copy-preview-list dd {
+  margin: 0;
+  color: #172026;
+  line-height: 1.45;
+}
+
+.text-link {
+  color: #24585c;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.text-link:hover,
+.text-link:focus-visible {
+  text-decoration: underline;
 }
 
 .result-section {
