@@ -6,6 +6,7 @@ from invictus_os.schemas.agent import AgentRunRequest, AgentRunResponse, AgentSu
 from invictus_os.schemas.content import ContentGenerationRequest, GeneratedContentResponse
 from invictus_os.schemas.design import DesignGraphicRequest, DesignGraphicResponse
 from invictus_os.schemas.health import HealthResponse
+from invictus_os.schemas.reel import ReelPackageRequest, ReelPackageResponse
 from invictus_os.services.agent_service import AgentService
 from invictus_os.services.content_generator import (
     ContentGenerationError,
@@ -17,6 +18,7 @@ from invictus_os.services.content_generator import (
     OpenAIRateLimitError,
 )
 from invictus_os.services.design_service import DesignService, DesignServiceError
+from invictus_os.services.reel_service import ReelService, ReelServiceError
 
 router = APIRouter()
 agent_service = AgentService(registry=build_agent_registry())
@@ -75,6 +77,15 @@ def create_design_graphic(request: DesignGraphicRequest) -> DesignGraphicRespons
     try:
         return service.create_graphic(request)
     except DesignServiceError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=exc.message) from exc
+
+
+@router.post("/reels/today", response_model=ReelPackageResponse, tags=["reels"])
+def create_today_reel(request: ReelPackageRequest) -> ReelPackageResponse:
+    service = ReelService()
+    try:
+        return service.create_package(request)
+    except ReelServiceError as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=exc.message) from exc
 
 

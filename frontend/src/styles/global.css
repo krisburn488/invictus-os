@@ -73,7 +73,8 @@ h1 {
 .results-panel,
 .error-panel,
 .setup-panel,
-.design-result-panel {
+.design-result-panel,
+.reel-result-panel {
   border: 1px solid #d8ddd2;
   border-radius: 8px;
   background: #ffffff;
@@ -133,7 +134,8 @@ h1 {
 .results-panel,
 .error-panel,
 .setup-panel,
-.design-result-panel {
+.design-result-panel,
+.reel-result-panel {
   padding: 22px;
 }
 
@@ -383,19 +385,22 @@ h1 {
 }
 
 .setup-panel,
-.design-result-panel {
+.design-result-panel,
+.reel-result-panel {
   padding: 16px;
 }
 
 .setup-panel strong,
-.design-result-panel h3 {
+.design-result-panel h3,
+.reel-result-panel h3 {
   display: block;
   margin: 0 0 6px;
   color: #172026;
 }
 
 .setup-panel p,
-.design-result-panel p {
+.design-result-panel p,
+.reel-result-panel p {
   margin-bottom: 0;
   color: #425047;
   line-height: 1.5;
@@ -428,6 +433,43 @@ h1 {
   margin: 0;
   color: #172026;
   font-size: 0.96rem;
+}
+
+.download-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0 16px;
+}
+
+.reel-preview-grid,
+.scene-list {
+  display: grid;
+  gap: 12px;
+}
+
+.reel-preview-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 12px;
+}
+
+.reel-preview-card,
+.scene-card {
+  border: 1px solid #e1e6df;
+  border-radius: 8px;
+  background: #fbfcf8;
+  padding: 14px;
+}
+
+.reel-preview-card h4,
+.scene-card h5 {
+  margin: 0 0 8px;
+  color: #172026;
+  font-size: 0.98rem;
+}
+
+.scene-card {
+  background: #ffffff;
 }
 
 .copy-preview-list {
@@ -523,6 +565,10 @@ h1 {
   }
 
   .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reel-preview-grid {
     grid-template-columns: 1fr;
   }
 }

@@ -6,13 +6,16 @@ import { ActivityFeed } from "../components/ActivityFeed";
 import { ContentGeneratorForm } from "../components/ContentGeneratorForm";
 import { DesignGraphicWorkflow } from "../components/DesignGraphicWorkflow";
 import { GeneratedContentResults } from "../components/GeneratedContentResults";
+import { ReelWorkflow } from "../components/ReelWorkflow";
 import { StatusPanel } from "../components/StatusPanel";
 import { WorkflowCard } from "../components/WorkflowCard";
 import { useAgents } from "../hooks/useAgents";
 import { contentGenerator } from "../services/contentGenerator";
 import { createDesignGraphic } from "../services/design";
+import { createTodayReel } from "../services/reel";
 import type { ContentGenerationRequest, GeneratedContent } from "../types/content";
 import type { DesignGraphicResponse, GraphicType } from "../types/design";
+import type { ReelFormat, ReelPackage } from "../types/reel";
 import type { ActivityItem, WorkflowStep } from "../types/system";
 
 const actions = [
@@ -77,6 +80,9 @@ export function App() {
   const [designResult, setDesignResult] = useState<DesignGraphicResponse | null>(null);
   const [designError, setDesignError] = useState<string | null>(null);
   const [isCreatingDesignGraphic, setIsCreatingDesignGraphic] = useState(false);
+  const [reelResult, setReelResult] = useState<ReelPackage | null>(null);
+  const [reelError, setReelError] = useState<string | null>(null);
+  const [isCreatingReel, setIsCreatingReel] = useState(false);
 
   const workflowSteps = useMemo<WorkflowStep[]>(
     () =>
@@ -123,6 +129,11 @@ export function App() {
   function openDesignGraphic() {
     setActiveAction("Make Canva Graphic");
     setDesignError(null);
+  }
+
+  function openReelWorkflow() {
+    setActiveAction("Create Today's Reel");
+    setReelError(null);
   }
 
   async function handleGenerateContent(request: ContentGenerationRequest) {
@@ -179,6 +190,34 @@ export function App() {
     }
   }
 
+  async function handleCreateReel(reelFormat: ReelFormat) {
+    if (!generatedContent) {
+      setReelError("Generate today's content first, then create a reel.");
+      return;
+    }
+
+    setReelError(null);
+    setReelResult(null);
+    setIsCreatingReel(true);
+
+    try {
+      const result = await createTodayReel({ content: generatedContent, reelFormat });
+      setReelResult(result);
+      handleAction(
+        "Create Today's Reel",
+        `Created a ${result.durationSeconds}-second ${formatReelLabel(reelFormat)} reel package.`,
+      );
+    } catch (error) {
+      setReelError(
+        error instanceof Error
+          ? error.message
+          : "InvictusOS could not create today's reel. Please try again.",
+      );
+    } finally {
+      setIsCreatingReel(false);
+    }
+  }
+
   return (
     <main className="app-shell">
       <section className="masthead">
@@ -208,6 +247,8 @@ export function App() {
                 onClick={
                   action.title === "Generate Today's Content"
                     ? openContentGenerator
+                    : action.title === "Create Today's Reel"
+                      ? openReelWorkflow
                     : action.title === "Make Canva Graphic"
                       ? openDesignGraphic
                     : () => handleAction(action.title, action.detail)
@@ -243,6 +284,15 @@ export function App() {
               result={designResult}
             />
           ) : null}
+          {activeAction === "Create Today's Reel" ? (
+            <ReelWorkflow
+              content={generatedContent}
+              error={reelError}
+              isCreating={isCreatingReel}
+              onSubmit={handleCreateReel}
+              result={reelResult}
+            />
+          ) : null}
           {contentError ? (
             <section className="error-panel" role="alert">
               <strong>Content generation needs attention</strong>
@@ -256,4 +306,12 @@ export function App() {
       </section>
     </main>
   );
+}
+
+function formatReelLabel(reelFormat: ReelFormat) {
+  return {
+    talking_head: "talking head",
+    ai_avatar: "AI avatar",
+    b_roll: "B-roll",
+  }[reelFormat];
 }
