@@ -163,37 +163,21 @@ Save the file in TextEdit, then close TextEdit.
 
 Do not share your OpenAI API key or paste it into chat messages.
 
-## Step 7: Optional Canva Setup
+## Step 7: Graphic Generation
 
-Invictus OS can also create Canva graphics from the content you generate.
+Invictus OS can create finished social graphics from the content you generate.
 
-This part is optional. If you skip it, the app will still run and will show a friendly Canva setup message when you click `Make Canva Graphic`.
+No extra Canva account or Canva API key is required. The graphic generator runs inside Invictus OS.
 
-To connect Canva, your Canva integration needs an OAuth access token and a Brand Template ID. The Brand Template should be a 1080x1350 portrait design with these autofill text fields:
+The `Make Canva Graphic` button keeps its name, but the app now creates the graphic internally. It generates 1080x1350 Instagram/Facebook graphics with:
 
-- `HEADLINE`
-- `BODY_TEXT`
-- `CALL_TO_ACTION`
-- `GRAPHIC_TYPE`
+- A headline
+- Body text
+- A call to action
+- A preview
+- PNG download buttons
 
-Open the backend `.env` file again:
-
-```bash
-open -a TextEdit .env
-```
-
-Add these lines, replacing the example values with your Canva values:
-
-```text
-CANVA_ACCESS_TOKEN=your-canva-oauth-access-token
-CANVA_BRAND_TEMPLATE_ID=your-canva-brand-template-id
-INVICTUS_CANVA_HEADLINE_FIELD=HEADLINE
-INVICTUS_CANVA_BODY_FIELD=BODY_TEXT
-INVICTUS_CANVA_CTA_FIELD=CALL_TO_ACTION
-INVICTUS_CANVA_GRAPHIC_TYPE_FIELD=GRAPHIC_TYPE
-```
-
-Save the file, then close TextEdit.
+To use it, generate content first, then click `Make Canva Graphic`.
 
 ## Step 8: Start the Backend
 
@@ -286,7 +270,7 @@ API connected
 
 To test content generation, click `Generate Today's Content`, fill out the form, and click `Generate Content`.
 
-To test Canva graphics, generate content first, then click `Make Canva Graphic`. If Canva is not connected, the app will explain which Canva settings are missing.
+To test graphics, generate content first, then click `Make Canva Graphic`. Choose `Single Post`, `Carousel`, or `Quote graphic`, then click `Create Canva Graphic`. When the preview appears, click `Download PNG`.
 
 If you see a message about a missing OpenAI API key, go back to Step 6 and make sure `backend/.env` contains your real key. Then stop and restart the backend.
 

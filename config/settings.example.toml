@@ -17,15 +17,6 @@ model = "gpt-5.5"
 api_key_environment_variable = "OPENAI_API_KEY"
 timeout_seconds = 30
 
-[canva]
-api_base_url = "https://api.canva.com/rest/v1"
-access_token_environment_variable = "CANVA_ACCESS_TOKEN"
-brand_template_id_environment_variable = "CANVA_BRAND_TEMPLATE_ID"
-headline_field = "HEADLINE"
-body_field = "BODY_TEXT"
-cta_field = "CALL_TO_ACTION"
-graphic_type_field = "GRAPHIC_TYPE"
-
 [workflows]
 max_concurrent_runs = 4
 require_approval_for_external_actions = true

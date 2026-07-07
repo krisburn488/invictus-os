@@ -28,7 +28,7 @@ Dependencies point inward. Frameworks and infrastructure can change without rewr
 - **Backend:** Python 3.12, FastAPI, Pydantic Settings, Uvicorn
 - **Frontend:** React 18, TypeScript, Vite
 - **AI generation:** OpenAI Responses API using `gpt-5.5` by default
-- **Design automation:** Canva Connect APIs with Brand Template Autofill
+- **Design automation:** Internal AI-assisted graphic generator with SVG-to-PNG export
 - **Architecture:** Clean Architecture, typed ports, modular agents, explicit workflow definitions
 - **Quality:** Ruff, Pytest, strict TypeScript, production-oriented configuration
 
@@ -162,25 +162,19 @@ npm run dev
 The dashboard calls the FastAPI backend at `http://127.0.0.1:8000` by default. To point the
 frontend at a different backend, set `VITE_API_BASE_URL`.
 
-### Canva Setup
+### Graphic Generation
 
-The `Make Canva Graphic` workflow uses the official Canva Connect APIs. In production it creates a
-design from a reusable Canva Brand Template using the Autofill API.
+The `Make Canva Graphic` workflow uses the generated content from `Generate Today's Content` and
+creates finished 1080x1350 Instagram/Facebook graphics internally. It extracts the headline, body
+text, and call to action, then generates previewable SVG slides that the dashboard exports as PNGs.
 
-Add these values to `backend/.env`:
+Supported formats:
 
-```bash
-CANVA_ACCESS_TOKEN=your-canva-oauth-access-token
-CANVA_BRAND_TEMPLATE_ID=your-canva-brand-template-id
-INVICTUS_CANVA_HEADLINE_FIELD=HEADLINE
-INVICTUS_CANVA_BODY_FIELD=BODY_TEXT
-INVICTUS_CANVA_CTA_FIELD=CALL_TO_ACTION
-INVICTUS_CANVA_GRAPHIC_TYPE_FIELD=GRAPHIC_TYPE
-```
+- Single Post
+- Carousel
+- Quote Graphic
 
-The Canva Brand Template should be a 1080x1350 portrait social graphic with autofill text fields
-matching those names. The template should encode the reusable visual system: modern healthcare
-branding, clean typography, strong hierarchy, and mobile-first composition for Instagram and
-Facebook.
-
-If Canva credentials are not configured, the dashboard shows a setup message instead of crashing.
+The design system is built around Invictus Wellness branding: white backgrounds, blue and green
+accents, professional typography, strong hierarchy, and mobile-first composition. The backend design
+service is provider-neutral so a future Canva, Figma, or image-model provider can be added behind
+the same service boundary.

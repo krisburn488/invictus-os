@@ -3,19 +3,10 @@ from fastapi import APIRouter, HTTPException, status
 from invictus_os.agents.registry import build_agent_registry
 from invictus_os.config.settings import get_settings
 from invictus_os.schemas.agent import AgentRunRequest, AgentRunResponse, AgentSummary
-from invictus_os.schemas.canva import CanvaGraphicRequest, CanvaGraphicResponse
 from invictus_os.schemas.content import ContentGenerationRequest, GeneratedContentResponse
+from invictus_os.schemas.design import DesignGraphicRequest, DesignGraphicResponse
 from invictus_os.schemas.health import HealthResponse
 from invictus_os.services.agent_service import AgentService
-from invictus_os.services.canva_design import (
-    CanvaAuthenticationError,
-    CanvaCredentials,
-    CanvaDesignError,
-    CanvaDesignService,
-    CanvaInvalidResponseError,
-    CanvaNetworkError,
-    CanvaRateLimitError,
-)
 from invictus_os.services.content_generator import (
     ContentGenerationError,
     InvalidContentResponseError,
@@ -25,6 +16,7 @@ from invictus_os.services.content_generator import (
     OpenAIQuotaError,
     OpenAIRateLimitError,
 )
+from invictus_os.services.design_service import DesignService, DesignServiceError
 
 router = APIRouter()
 agent_service = AgentService(registry=build_agent_registry())
@@ -77,41 +69,12 @@ def generate_content(request: ContentGenerationRequest) -> GeneratedContentRespo
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=exc.message) from exc
 
 
-@router.post("/canva/graphics", response_model=CanvaGraphicResponse, tags=["canva"])
-def create_canva_graphic(request: CanvaGraphicRequest) -> CanvaGraphicResponse:
-    settings = get_settings()
-    service = CanvaDesignService(
-        credentials=CanvaCredentials(
-            access_token=settings.canva_access_token,
-            brand_template_id=settings.canva_brand_template_id,
-            api_base_url=settings.canva_api_base_url,
-            timeout_seconds=settings.canva_timeout_seconds,
-            poll_attempts=settings.canva_poll_attempts,
-            poll_interval_seconds=settings.canva_poll_interval_seconds,
-            headline_field=settings.canva_headline_field,
-            body_field=settings.canva_body_field,
-            cta_field=settings.canva_cta_field,
-            graphic_type_field=settings.canva_graphic_type_field,
-        )
-    )
-
+@router.post("/design/graphics", response_model=DesignGraphicResponse, tags=["design"])
+def create_design_graphic(request: DesignGraphicRequest) -> DesignGraphicResponse:
+    service = DesignService()
     try:
         return service.create_graphic(request)
-    except CanvaAuthenticationError as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=exc.message) from exc
-    except CanvaRateLimitError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=exc.message,
-        ) from exc
-    except CanvaNetworkError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=exc.message,
-        ) from exc
-    except CanvaInvalidResponseError as exc:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=exc.message) from exc
-    except CanvaDesignError as exc:
+    except DesignServiceError as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=exc.message) from exc
 
 

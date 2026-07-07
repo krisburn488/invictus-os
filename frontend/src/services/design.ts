@@ -1,7 +1,7 @@
-import type { CanvaGraphicRequest, CanvaGraphicResponse } from "../types/canva";
+import type { DesignGraphicRequest, DesignGraphicResponse } from "../types/design";
 
-type ApiCanvaGraphicResponse = {
-  status: "created" | "in_progress" | "setup_required";
+type ApiDesignGraphicResponse = {
+  status: "created";
   graphic_type: "single" | "carousel" | "quote";
   extracted_content: {
     headline: string;
@@ -9,22 +9,24 @@ type ApiCanvaGraphicResponse = {
     call_to_action: string;
   };
   message: string;
-  design?: {
-    url?: string | null;
-    thumbnail_url?: string | null;
-    job_id?: string | null;
-  } | null;
+  slides: {
+    id: string;
+    title: string;
+    width: number;
+    height: number;
+    svg: string;
+  }[];
 };
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
-export async function createCanvaGraphic(
-  request: CanvaGraphicRequest,
-): Promise<CanvaGraphicResponse> {
+export async function createDesignGraphic(
+  request: DesignGraphicRequest,
+): Promise<DesignGraphicResponse> {
   let response: Response;
 
   try {
-    response = await fetch(`${apiBaseUrl}/canva/graphics`, {
+    response = await fetch(`${apiBaseUrl}/design/graphics`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -50,8 +52,8 @@ export async function createCanvaGraphic(
     throw new Error(extractErrorMessage(payload));
   }
 
-  if (!isApiCanvaGraphicResponse(payload)) {
-    throw new Error("InvictusOS received an unexpected Canva response.");
+  if (!isApiDesignGraphicResponse(payload)) {
+    throw new Error("InvictusOS received an unexpected design response.");
   }
 
   return {
@@ -63,40 +65,43 @@ export async function createCanvaGraphic(
       callToAction: payload.extracted_content.call_to_action,
     },
     message: payload.message,
-    design: payload.design
-      ? {
-          url: payload.design.url ?? undefined,
-          thumbnailUrl: payload.design.thumbnail_url ?? undefined,
-          jobId: payload.design.job_id ?? undefined,
-        }
-      : undefined,
+    slides: payload.slides,
   };
 }
 
 function extractErrorMessage(value: unknown) {
   if (value && typeof value === "object" && "detail" in value) {
     const detail = (value as { detail: unknown }).detail;
-    return typeof detail === "string" ? detail : "InvictusOS could not create the Canva graphic.";
+    return typeof detail === "string" ? detail : "InvictusOS could not create the graphic.";
   }
 
-  return "InvictusOS could not create the Canva graphic.";
+  return "InvictusOS could not create the graphic.";
 }
 
-function isApiCanvaGraphicResponse(value: unknown): value is ApiCanvaGraphicResponse {
+function isApiDesignGraphicResponse(value: unknown): value is ApiDesignGraphicResponse {
   if (!value || typeof value !== "object") {
     return false;
   }
 
-  const response = value as Partial<ApiCanvaGraphicResponse>;
+  const response = value as Partial<ApiDesignGraphicResponse>;
   const extracted = response.extracted_content;
 
   return (
-    typeof response.status === "string" &&
+    response.status === "created" &&
     typeof response.graphic_type === "string" &&
     Boolean(extracted) &&
     typeof extracted?.headline === "string" &&
     typeof extracted.body_text === "string" &&
     typeof extracted.call_to_action === "string" &&
-    typeof response.message === "string"
+    typeof response.message === "string" &&
+    Array.isArray(response.slides) &&
+    response.slides.every(
+      (slide) =>
+        typeof slide.id === "string" &&
+        typeof slide.title === "string" &&
+        typeof slide.width === "number" &&
+        typeof slide.height === "number" &&
+        typeof slide.svg === "string",
+    )
   );
 }

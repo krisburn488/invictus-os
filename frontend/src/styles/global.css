@@ -73,7 +73,7 @@ h1 {
 .results-panel,
 .error-panel,
 .setup-panel,
-.canva-result-panel {
+.design-result-panel {
   border: 1px solid #d8ddd2;
   border-radius: 8px;
   background: #ffffff;
@@ -133,7 +133,7 @@ h1 {
 .results-panel,
 .error-panel,
 .setup-panel,
-.canva-result-panel {
+.design-result-panel {
   padding: 22px;
 }
 
@@ -383,22 +383,51 @@ h1 {
 }
 
 .setup-panel,
-.canva-result-panel {
+.design-result-panel {
   padding: 16px;
 }
 
 .setup-panel strong,
-.canva-result-panel h3 {
+.design-result-panel h3 {
   display: block;
   margin: 0 0 6px;
   color: #172026;
 }
 
 .setup-panel p,
-.canva-result-panel p {
+.design-result-panel p {
   margin-bottom: 0;
   color: #425047;
   line-height: 1.5;
+}
+
+.design-preview-grid {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.design-preview-card {
+  border: 1px solid #e1e6df;
+  border-radius: 8px;
+  background: #fbfcf8;
+  padding: 12px;
+}
+
+.design-preview-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  border: 1px solid #d8ddd2;
+  border-radius: 8px;
+  background: #ffffff;
+  object-fit: cover;
+}
+
+.design-preview-card h4 {
+  margin: 0;
+  color: #172026;
+  font-size: 0.96rem;
 }
 
 .copy-preview-list {
