@@ -1,61 +1,97 @@
 {
-  "version": 2,
-  "installCommand": "cd frontend && npm install && cd ../backend && pip install -e .",
-  "buildCommand": "cd frontend && VITE_API_BASE_URL= npm run build",
-  "outputDirectory": "frontend/dist",
-  "env": {
-    "PYTHONPATH": "backend/src"
-  },
-  "functions": {
-    "backend/src/invictus_os/api/app.py": {
-      "runtime": "python3.12",
-      "maxDuration": 30
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "frontend": {
+      "root": "frontend/",
+      "framework": "vite",
+      "installCommand": "npm install",
+      "buildCommand": "VITE_API_BASE_URL= npm run build",
+      "outputDirectory": "dist",
+      "rewrites": [
+        {
+          "source": "/(.*)",
+          "destination": "/index.html"
+        }
+      ]
+    },
+    "backend": {
+      "root": "backend/",
+      "framework": "fastapi",
+      "entrypoint": "invictus_os.api.app:app",
+      "installCommand": "pip install -e .",
+      "functions": {
+        "src/invictus_os/api/app.py": {
+          "maxDuration": 30
+        }
+      }
     }
   },
   "rewrites": [
     {
       "source": "/health",
-      "destination": "/backend/src/invictus_os/api/app.py"
+      "destination": {
+        "service": "backend"
+      }
     },
     {
-      "source": "/agents/:path*",
-      "destination": "/backend/src/invictus_os/api/app.py"
+      "source": "/agents/(.*)",
+      "destination": {
+        "service": "backend"
+      }
     },
     {
-      "source": "/content/:path*",
-      "destination": "/backend/src/invictus_os/api/app.py"
+      "source": "/content/(.*)",
+      "destination": {
+        "service": "backend"
+      }
     },
     {
-      "source": "/design/:path*",
-      "destination": "/backend/src/invictus_os/api/app.py"
+      "source": "/design/(.*)",
+      "destination": {
+        "service": "backend"
+      }
     },
     {
-      "source": "/reels/:path*",
-      "destination": "/backend/src/invictus_os/api/app.py"
+      "source": "/reels/(.*)",
+      "destination": {
+        "service": "backend"
+      }
     },
     {
-      "source": "/schedule/:path*",
-      "destination": "/backend/src/invictus_os/api/app.py"
+      "source": "/schedule/(.*)",
+      "destination": {
+        "service": "backend"
+      }
     },
     {
       "source": "/settings",
-      "destination": "/backend/src/invictus_os/api/app.py"
+      "destination": {
+        "service": "backend"
+      }
     },
     {
       "source": "/docs",
-      "destination": "/backend/src/invictus_os/api/app.py"
+      "destination": {
+        "service": "backend"
+      }
     },
     {
       "source": "/redoc",
-      "destination": "/backend/src/invictus_os/api/app.py"
+      "destination": {
+        "service": "backend"
+      }
     },
     {
       "source": "/openapi.json",
-      "destination": "/backend/src/invictus_os/api/app.py"
+      "destination": {
+        "service": "backend"
+      }
     },
     {
-      "source": "/:path*",
-      "destination": "/index.html"
+      "source": "/(.*)",
+      "destination": {
+        "service": "frontend"
+      }
     }
   ]
 }
