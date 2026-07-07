@@ -179,7 +179,7 @@ The backend is a FastAPI app. Its Vercel entrypoint is declared in `backend/pypr
 
 ```toml
 [tool.vercel]
-entrypoint = "invictus_os.api.app:app"
+entrypoint = "src.invictus_os.api.app:app"
 ```
 
 This tells Vercel how to find the FastAPI `app` instance when `backend` is deployed as its own
