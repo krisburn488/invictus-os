@@ -424,3 +424,20 @@ Browser:
 ```text
 http://127.0.0.1:5173/
 ```
+
+## Deploying on Vercel
+
+Local development and Vercel production use different setup steps.
+
+For Vercel, deploy exactly two projects from the same GitHub repository:
+
+- `invictus-os-backend` from the `backend` folder.
+- `invictus-os-frontend` from the `frontend` folder.
+
+Do not deploy the repository root as the production app.
+
+The full Vercel guide is here:
+
+```text
+docs/vercel-deployment.md
+```
