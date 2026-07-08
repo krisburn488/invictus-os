@@ -21,3 +21,4 @@ coverage/
 *.log
 
 backend/.local/
+.vercel
