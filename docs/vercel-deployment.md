@@ -62,6 +62,9 @@ The backend FastAPI entrypoint is configured in `backend/pyproject.toml`:
 entrypoint = "src.invictus_os.api.app:app"
 ```
 
+The backend also includes `backend/vercel.json` and `backend/api/index.py` so Vercel creates a
+Python serverless function for every API route when the project root is `backend`.
+
 ## Backend Environment Variables
 
 Add these environment variables to the `invictus-os-backend` Vercel project.
