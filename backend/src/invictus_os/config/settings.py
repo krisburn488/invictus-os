@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -16,6 +17,11 @@ class Settings(BaseSettings):
     )
     openai_model: str = "gpt-5.5"
     openai_timeout_seconds: float = 30.0
+    vercel: str | None = Field(default=None, validation_alias=AliasChoices("VERCEL"))
+    storage_dir: Path | None = Field(
+        default=None,
+        validation_alias=AliasChoices("INVICTUS_STORAGE_DIR", "INVICTUS_DATA_DIR"),
+    )
 
     model_config = SettingsConfigDict(env_prefix="INVICTUS_", env_file=".env", extra="ignore")
 
@@ -23,3 +29,12 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def get_runtime_storage_dir() -> Path:
+    settings = get_settings()
+    if settings.storage_dir:
+        return settings.storage_dir
+    if settings.vercel:
+        return Path("/tmp/invictus-os")
+    return Path(".local")
