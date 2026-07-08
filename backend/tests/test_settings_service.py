@@ -3,6 +3,7 @@ import json
 import pytest
 
 from invictus_os.schemas.settings import AppSettingsUpdateRequest, BrandSettings, BusinessProfileSettings
+from invictus_os.config.settings import get_runtime_storage_dir
 from invictus_os.config.settings import get_settings as get_runtime_settings
 from invictus_os.services.settings_service import LocalSettingsRepository, SettingsService
 
@@ -117,5 +118,16 @@ def test_settings_service_reads_openai_key_from_environment(monkeypatch, tmp_pat
     assert settings.providers.openai_api_key.masked_value == "sk-v****-key"
     assert config.api_key == "sk-vercel-env-key"
     assert config.model == "gpt-5.5"
+
+    get_runtime_settings.cache_clear()
+
+
+def test_runtime_storage_uses_writable_tmp_directory_on_vercel(monkeypatch) -> None:
+    monkeypatch.setenv("VERCEL", "1")
+    monkeypatch.delenv("INVICTUS_STORAGE_DIR", raising=False)
+    monkeypatch.delenv("INVICTUS_DATA_DIR", raising=False)
+    get_runtime_settings.cache_clear()
+
+    assert str(get_runtime_storage_dir()) == "/tmp/invictus-os"
 
     get_runtime_settings.cache_clear()
