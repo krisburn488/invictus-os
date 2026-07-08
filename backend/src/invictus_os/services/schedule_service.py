@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from pydantic import ValidationError
 
+from invictus_os.config.settings import get_runtime_storage_dir
 from invictus_os.schemas.schedule import (
     SchedulePostRequest,
     ScheduledPost,
@@ -22,7 +23,7 @@ class ScheduleStorageError(ScheduleServiceError):
 
 class LocalScheduleRepository:
     def __init__(self, storage_path: Path | None = None) -> None:
-        self._storage_path = storage_path or Path(".local/scheduled_posts.json")
+        self._storage_path = storage_path or get_runtime_storage_dir() / "scheduled_posts.json"
 
     def list_posts(self) -> list[ScheduledPost]:
         if not self._storage_path.exists():
