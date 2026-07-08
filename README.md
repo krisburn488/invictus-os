@@ -165,8 +165,12 @@ frontend at a different backend, set `VITE_API_BASE_URL`.
 
 InvictusOS can be deployed as two separate Vercel projects from the same repository:
 
-- **frontend:** set the Vercel project root directory to `frontend`
-- **backend:** set the Vercel project root directory to `backend`
+- **invictus-os-frontend:** set the Vercel project root directory to `frontend`
+- **invictus-os-backend:** set the Vercel project root directory to `backend`
+
+The repository root is not a production Vercel project. Deploy only the `frontend` and `backend`
+directories as separate projects. Full click-by-click instructions are in
+[`docs/vercel-deployment.md`](docs/vercel-deployment.md).
 
 The frontend is a Vite app and reads the backend URL from `VITE_API_BASE_URL`. In the frontend
 Vercel project, set `VITE_API_BASE_URL` to the deployed backend project URL, for example:
