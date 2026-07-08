@@ -193,6 +193,10 @@ In the backend Vercel project, set `OPENAI_API_KEY` to the OpenAI project key us
 The dashboard Settings page can still store a local key during development, but Vercel production
 should use environment variables for secrets.
 
+To return completed AI-generated MP4 reels, set `HIGGSFIELD_MCP_BRIDGE_URL` on the backend project
+to a server-side bridge that can invoke the connected Higgsfield MCP `generate_video` tool. Without
+that bridge, Invictus OS still generates the reel package and shows a retryable video setup message.
+
 The backend is a FastAPI app. Its Vercel entrypoint is declared in `backend/pyproject.toml` as:
 
 ```toml

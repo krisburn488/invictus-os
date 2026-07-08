@@ -95,6 +95,7 @@ export function App() {
   const [reelResult, setReelResult] = useState<ReelPackage | null>(null);
   const [reelError, setReelError] = useState<string | null>(null);
   const [isCreatingReel, setIsCreatingReel] = useState(false);
+  const [lastReelFormat, setLastReelFormat] = useState<ReelFormat>("talking_head");
   const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
   const [scheduleError, setScheduleError] = useState<string | null>(null);
   const [scheduleSuccess, setScheduleSuccess] = useState<string | null>(null);
@@ -231,6 +232,7 @@ export function App() {
       return;
     }
 
+    setLastReelFormat(reelFormat);
     setReelError(null);
     setReelResult(null);
     setIsCreatingReel(true);
@@ -238,9 +240,13 @@ export function App() {
     try {
       const result = await createTodayReel({ content: generatedContent, reelFormat });
       setReelResult(result);
+      const videoDetail =
+        result.video?.status === "completed"
+          ? " Higgsfield returned an MP4 video."
+          : " The video provider needs attention before an MP4 can be displayed.";
       handleAction(
         "Create Today's Reel",
-        `Created a ${result.durationSeconds}-second ${formatReelLabel(reelFormat)} reel package.`,
+        `Created a ${result.durationSeconds}-second ${formatReelLabel(reelFormat)} reel package.${videoDetail}`,
       );
     } catch (error) {
       setReelError(
@@ -412,6 +418,7 @@ export function App() {
               content={generatedContent}
               error={reelError}
               isCreating={isCreatingReel}
+              onRetry={() => void handleCreateReel(lastReelFormat)}
               onSubmit={handleCreateReel}
               result={reelResult}
             />

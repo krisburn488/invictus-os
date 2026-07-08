@@ -72,11 +72,16 @@ Add these environment variables to the `invictus-os-backend` Vercel project.
 | Name | Required | Value |
 | --- | --- | --- |
 | `OPENAI_API_KEY` | Yes | Your OpenAI project API key |
+| `HIGGSFIELD_MCP_BRIDGE_URL` | Required for MP4 video generation | Server-side bridge URL that can call the connected Higgsfield MCP `generate_video` tool |
 | `INVICTUS_CORS_ORIGIN_REGEX` | No | `https://.*\.vercel\.app` |
 | `INVICTUS_CORS_ORIGINS` | No | JSON list of custom frontend domains |
 
 For the normal Vercel production URL, no custom CORS variable is required because the backend
 already allows Vercel app domains by default.
+
+`HIGGSFIELD_MCP_BRIDGE_URL` must be configured on the backend project before the dashboard can
+return completed MP4 videos. If it is missing, Invictus OS still creates the reel package, JSON,
+Markdown, storyboard, and Higgsfield prompts, then shows a retryable setup message in the video area.
 
 If you add a custom frontend domain later, set `INVICTUS_CORS_ORIGINS` to a JSON list like this:
 

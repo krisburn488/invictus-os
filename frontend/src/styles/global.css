@@ -535,6 +535,55 @@ h1 {
   margin: 12px 0 16px;
 }
 
+.reel-progress-panel {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.reel-progress-step {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-height: 46px;
+  padding: 8px;
+  border: 1px solid #d8ddd2;
+  border-radius: 8px;
+  background: #fbfcf8;
+  color: #5d6b5a;
+}
+
+.reel-progress-step span {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #e1e6df;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.reel-progress-step p {
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.reel-progress-step--active {
+  border-color: #2f6f73;
+  background: #f4fbf8;
+  color: #24585c;
+}
+
+.reel-progress-step--active span {
+  background: #2f6f73;
+  color: #ffffff;
+}
+
 .reel-preview-grid,
 .scene-list {
   display: grid;
@@ -563,6 +612,20 @@ h1 {
 
 .scene-card {
   background: #ffffff;
+}
+
+.reel-video-preview {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+
+.reel-video-preview video {
+  width: min(100%, 360px);
+  aspect-ratio: 9 / 16;
+  border: 1px solid #d8ddd2;
+  border-radius: 8px;
+  background: #101820;
 }
 
 .copy-preview-list {
@@ -662,6 +725,10 @@ h1 {
   }
 
   .reel-preview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reel-progress-panel {
     grid-template-columns: 1fr;
   }
 }

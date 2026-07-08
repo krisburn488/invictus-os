@@ -19,6 +19,17 @@ type ApiReelPackage = {
   reel_format: "talking_head" | "ai_avatar" | "b_roll";
   duration_seconds: number;
   markdown: string;
+  video?: {
+    status: "completed" | "failed" | "not_configured";
+    provider: string;
+    width: number;
+    height: number;
+    video_url?: string | null;
+    download_url?: string | null;
+    job_id?: string | null;
+    error_message?: string | null;
+    retryable: boolean;
+  } | null;
 };
 
 const apiBaseUrl = getApiBaseUrl();
@@ -75,6 +86,19 @@ export async function createTodayReel(request: ReelPackageRequest): Promise<Reel
     reelFormat: payload.reel_format,
     durationSeconds: payload.duration_seconds,
     markdown: payload.markdown,
+    video: payload.video
+      ? {
+          status: payload.video.status,
+          provider: payload.video.provider,
+          width: payload.video.width,
+          height: payload.video.height,
+          videoUrl: payload.video.video_url ?? undefined,
+          downloadUrl: payload.video.download_url ?? undefined,
+          jobId: payload.video.job_id ?? undefined,
+          errorMessage: payload.video.error_message ?? undefined,
+          retryable: payload.video.retryable,
+        }
+      : undefined,
   };
 }
 
@@ -113,6 +137,14 @@ function isApiReelPackage(value: unknown): value is ApiReelPackage {
     Array.isArray(response.hashtags) &&
     typeof response.reel_format === "string" &&
     typeof response.duration_seconds === "number" &&
-    typeof response.markdown === "string"
+    typeof response.markdown === "string" &&
+    (response.video === undefined ||
+      response.video === null ||
+      (typeof response.video === "object" &&
+        typeof response.video.status === "string" &&
+        typeof response.video.provider === "string" &&
+        typeof response.video.width === "number" &&
+        typeof response.video.height === "number" &&
+        typeof response.video.retryable === "boolean"))
   );
 }

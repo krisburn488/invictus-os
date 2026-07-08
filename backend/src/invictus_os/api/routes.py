@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 
 from invictus_os.agents.registry import build_agent_registry
+from invictus_os.config.settings import get_settings
 from invictus_os.schemas.agent import AgentRunRequest, AgentRunResponse, AgentSummary
 from invictus_os.schemas.content import ContentGenerationRequest, GeneratedContentResponse
 from invictus_os.schemas.design import DesignGraphicRequest, DesignGraphicResponse
@@ -26,6 +27,7 @@ from invictus_os.services.openai_service import (
 from invictus_os.services.reel_service import ReelService, ReelServiceError
 from invictus_os.services.schedule_service import ScheduleService, ScheduleServiceError
 from invictus_os.services.settings_service import SettingsService, SettingsServiceError
+from invictus_os.services.video_service import HiggsfieldMcpBridgeConfig, HiggsfieldMcpVideoProvider
 
 router = APIRouter()
 agent_service = AgentService(registry=build_agent_registry())
@@ -98,7 +100,9 @@ def create_design_graphic(request: DesignGraphicRequest) -> DesignGraphicRespons
 def create_today_reel(request: ReelPackageRequest) -> ReelPackageResponse:
     service = ReelService(openai_service=build_openai_service())
     try:
-        return service.create_package(request)
+        reel_package = service.create_package(request)
+        video = build_video_provider().create_video(reel_package)
+        return reel_package.model_copy(update={"video": video})
     except MissingOpenAIAPIKeyError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=exc.message) from exc
     except InvalidOpenAIAPIKeyError as exc:
@@ -170,3 +174,13 @@ def run_agent(agent_id: str, request: AgentRunRequest) -> AgentRunResponse:
 def build_openai_service() -> OpenAIService:
     settings_service = SettingsService()
     return OpenAIService(config=settings_service.get_openai_config())
+
+
+def build_video_provider() -> HiggsfieldMcpVideoProvider:
+    settings = get_settings()
+    return HiggsfieldMcpVideoProvider(
+        config=HiggsfieldMcpBridgeConfig(
+            bridge_url=settings.higgsfield_mcp_bridge_url,
+            timeout_seconds=settings.higgsfield_timeout_seconds,
+        )
+    )

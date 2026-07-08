@@ -17,6 +17,11 @@ class Settings(BaseSettings):
     )
     openai_model: str = "gpt-5.5"
     openai_timeout_seconds: float = 30.0
+    higgsfield_mcp_bridge_url: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("HIGGSFIELD_MCP_BRIDGE_URL", "INVICTUS_HIGGSFIELD_MCP_BRIDGE_URL"),
+    )
+    higgsfield_timeout_seconds: float = 120.0
     vercel: str | None = Field(default=None, validation_alias=AliasChoices("VERCEL"))
     storage_dir: Path | None = Field(
         default=None,

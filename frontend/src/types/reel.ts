@@ -7,6 +7,18 @@ export type ReelPackageRequest = {
   reelFormat: ReelFormat;
 };
 
+export type ReelVideoResult = {
+  status: "completed" | "failed" | "not_configured";
+  provider: string;
+  width: number;
+  height: number;
+  videoUrl?: string;
+  downloadUrl?: string;
+  jobId?: string;
+  errorMessage?: string;
+  retryable: boolean;
+};
+
 export type ReelStoryboardScene = {
   sceneNumber: number;
   durationSeconds: number;
@@ -27,4 +39,5 @@ export type ReelPackage = {
   reelFormat: ReelFormat;
   durationSeconds: number;
   markdown: string;
+  video?: ReelVideoResult;
 };

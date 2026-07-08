@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 from invictus_os.schemas.content import GeneratedContentResponse
 
 ReelFormat = Literal["talking_head", "ai_avatar", "b_roll"]
+ReelVideoStatus = Literal["completed", "failed", "not_configured"]
 
 
 class ReelPackageRequest(BaseModel):
@@ -21,6 +22,18 @@ class ReelStoryboardScene(BaseModel):
     higgsfield_prompt: str = Field(min_length=1)
 
 
+class ReelVideoResult(BaseModel):
+    status: ReelVideoStatus
+    provider: str = "higgsfield"
+    width: int = 1080
+    height: int = 1920
+    video_url: str | None = None
+    download_url: str | None = None
+    job_id: str | None = None
+    error_message: str | None = None
+    retryable: bool = True
+
+
 class ReelPackageResponse(BaseModel):
     hook: str = Field(min_length=1)
     script: str = Field(min_length=1)
@@ -32,3 +45,4 @@ class ReelPackageResponse(BaseModel):
     reel_format: ReelFormat
     duration_seconds: int = Field(ge=30, le=45)
     markdown: str = Field(min_length=1)
+    video: ReelVideoResult | None = None
