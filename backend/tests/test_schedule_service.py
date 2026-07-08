@@ -6,6 +6,7 @@ from invictus_os.schemas.content import GeneratedContentResponse
 from invictus_os.schemas.design import DesignGraphicResponse, DesignSlide, GeneratedDesignCopy
 from invictus_os.schemas.reel import ReelPackageResponse, ReelStoryboardScene
 from invictus_os.schemas.schedule import SchedulePostRequest
+from invictus_os.config.settings import get_settings as get_runtime_settings
 from invictus_os.services.schedule_service import LocalScheduleRepository, ScheduleService
 
 
@@ -128,3 +129,25 @@ def test_schedule_request_requires_matching_asset() -> None:
             publish_now=True,
             content=build_content(),
         )
+
+
+def test_schedule_service_uses_runtime_storage_directory(monkeypatch, tmp_path) -> None:
+    runtime_dir = tmp_path / "runtime"
+    monkeypatch.setenv("INVICTUS_STORAGE_DIR", str(runtime_dir))
+    get_runtime_settings.cache_clear()
+
+    service = ScheduleService()
+    post = service.schedule_post(
+        SchedulePostRequest(
+            platform="instagram",
+            content_type="image_post",
+            draft_only=True,
+            content=build_content(),
+            design=build_design(),
+        )
+    )
+
+    assert post.status == "draft"
+    assert (runtime_dir / "scheduled_posts.json").exists()
+
+    get_runtime_settings.cache_clear()
