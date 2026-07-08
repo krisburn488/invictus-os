@@ -17,7 +17,7 @@
     "backend": {
       "root": "backend/",
       "framework": "fastapi",
-      "entrypoint": "invictus_os.api.app:app",
+      "entrypoint": "src.invictus_os.api.app:app",
       "installCommand": "pip install -e .",
       "functions": {
         "src/invictus_os/api/app.py": {

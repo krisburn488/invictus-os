@@ -175,6 +175,9 @@ Vercel project, set `VITE_API_BASE_URL` to the deployed backend project URL, for
 https://your-backend-project.vercel.app
 ```
 
+The frontend project includes `frontend/vercel.json`, so Vercel can detect the Vite build when the
+project root is set to `frontend`. It builds with `npm run build` and serves `frontend/dist`.
+
 The backend is a FastAPI app. Its Vercel entrypoint is declared in `backend/pyproject.toml` as:
 
 ```toml
