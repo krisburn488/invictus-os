@@ -3,6 +3,7 @@ import json
 import pytest
 
 from invictus_os.schemas.settings import AppSettingsUpdateRequest, BrandSettings, BusinessProfileSettings
+from invictus_os.config.settings import get_settings as get_runtime_settings
 from invictus_os.services.settings_service import LocalSettingsRepository, SettingsService
 
 
@@ -100,3 +101,21 @@ def test_settings_update_requires_posting_schedule() -> None:
                 posting_schedule=[],
             )
         )
+
+
+def test_settings_service_reads_openai_key_from_environment(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-vercel-env-key")
+    monkeypatch.setenv("INVICTUS_OPENAI_MODEL", "gpt-5.5")
+    get_runtime_settings.cache_clear()
+
+    service = build_service(tmp_path)
+
+    settings = service.get_settings()
+    config = service.get_openai_config()
+
+    assert settings.providers.openai_api_key.configured is True
+    assert settings.providers.openai_api_key.masked_value == "sk-v****-key"
+    assert config.api_key == "sk-vercel-env-key"
+    assert config.model == "gpt-5.5"
+
+    get_runtime_settings.cache_clear()

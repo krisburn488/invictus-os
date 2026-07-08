@@ -1,4 +1,5 @@
 import type { ContentGenerationRequest, ContentGenerator, GeneratedContent } from "../types/content";
+import { getApiBaseUrl } from "./api";
 
 type ApiGeneratedContent = {
   headline?: string | null;
@@ -10,7 +11,7 @@ type ApiGeneratedContent = {
   call_to_action: string;
 };
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+const apiBaseUrl = getApiBaseUrl();
 
 function toApiRequest(request: ContentGenerationRequest) {
   return {

@@ -178,6 +178,17 @@ https://your-backend-project.vercel.app
 The frontend project includes `frontend/vercel.json`, so Vercel can detect the Vite build when the
 project root is set to `frontend`. It builds with `npm run build` and serves `frontend/dist`.
 
+The backend allows localhost origins and Vercel app domains by default. For a custom frontend domain,
+set `INVICTUS_CORS_ORIGINS` in the backend Vercel project to a JSON list of allowed origins:
+
+```text
+["https://your-frontend-domain.com","https://your-frontend-project.vercel.app"]
+```
+
+In the backend Vercel project, set `OPENAI_API_KEY` to the OpenAI project key used for generation.
+The dashboard Settings page can still store a local key during development, but Vercel production
+should use environment variables for secrets.
+
 The backend is a FastAPI app. Its Vercel entrypoint is declared in `backend/pyproject.toml` as:
 
 ```toml

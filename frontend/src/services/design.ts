@@ -1,4 +1,5 @@
 import type { DesignGraphicRequest, DesignGraphicResponse } from "../types/design";
+import { getApiBaseUrl } from "./api";
 
 type ApiDesignGraphicResponse = {
   status: "created";
@@ -18,7 +19,7 @@ type ApiDesignGraphicResponse = {
   }[];
 };
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+const apiBaseUrl = getApiBaseUrl();
 
 export async function createDesignGraphic(
   request: DesignGraphicRequest,

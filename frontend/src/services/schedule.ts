@@ -1,6 +1,7 @@
 import type { DesignGraphicResponse } from "../types/design";
 import type { ReelPackage } from "../types/reel";
 import type { SchedulePostRequest, ScheduledPost } from "../types/schedule";
+import { getApiBaseUrl } from "./api";
 
 type ApiScheduledPost = {
   id: string;
@@ -62,7 +63,7 @@ type ApiReelPackage = {
   markdown: string;
 };
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+const apiBaseUrl = getApiBaseUrl();
 
 export async function listScheduledPosts(): Promise<ScheduledPost[]> {
   let response: Response;

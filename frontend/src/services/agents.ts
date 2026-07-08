@@ -1,9 +1,10 @@
 import type { AgentSummary } from "../types/system";
+import { getApiBaseUrl } from "./api";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+const apiBaseUrl = getApiBaseUrl();
 
 export async function fetchAgents(): Promise<AgentSummary[]> {
-  const response = await fetch(`${API_BASE_URL}/agents`);
+  const response = await fetch(`${apiBaseUrl}/agents`);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch agents: ${response.status}`);

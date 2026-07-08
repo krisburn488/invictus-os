@@ -1,4 +1,5 @@
 import type { ReelPackage, ReelPackageRequest } from "../types/reel";
+import { getApiBaseUrl } from "./api";
 
 type ApiReelPackage = {
   hook: string;
@@ -20,7 +21,7 @@ type ApiReelPackage = {
   markdown: string;
 };
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+const apiBaseUrl = getApiBaseUrl();
 
 export async function createTodayReel(request: ReelPackageRequest): Promise<ReelPackage> {
   let response: Response;

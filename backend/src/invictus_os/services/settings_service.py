@@ -7,6 +7,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from invictus_os.config.settings import get_settings as get_runtime_settings
 from invictus_os.schemas.settings import (
     AppSettingsResponse,
     AppSettingsUpdateRequest,
@@ -63,10 +64,10 @@ class SettingsService:
         self._repository = repository or LocalSettingsRepository()
 
     def get_settings(self) -> AppSettingsResponse:
-        return build_response(self._repository.load())
+        return build_response(apply_runtime_defaults(self._repository.load()))
 
     def get_openai_config(self) -> OpenAIServiceConfig:
-        payload = self._repository.load()
+        payload = apply_runtime_defaults(self._repository.load())
         openai = payload["openai"]
         return OpenAIServiceConfig(
             api_key=payload["credentials"]["openai_api_key"],
@@ -147,6 +148,19 @@ def merge_settings(defaults: dict[str, Any], stored: dict[str, Any]) -> dict[str
 
 def choose_secret(new_value: str | None, current_value: str) -> str:
     return new_value if new_value is not None else current_value
+
+
+def apply_runtime_defaults(payload: dict[str, Any]) -> dict[str, Any]:
+    runtime_settings = get_runtime_settings()
+    updated = merge_settings(default_settings_payload(), payload)
+
+    if not updated["credentials"]["openai_api_key"] and runtime_settings.openai_api_key:
+        updated["credentials"]["openai_api_key"] = runtime_settings.openai_api_key
+
+    if updated["openai"]["model"] == default_settings_payload()["openai"]["model"]:
+        updated["openai"]["model"] = runtime_settings.openai_model
+
+    return updated
 
 
 def build_response(payload: dict[str, Any]) -> AppSettingsResponse:
