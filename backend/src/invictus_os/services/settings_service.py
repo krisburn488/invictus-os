@@ -7,6 +7,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from invictus_os.config.settings import get_runtime_storage_dir
 from invictus_os.config.settings import get_settings as get_runtime_settings
 from invictus_os.schemas.settings import (
     AppSettingsResponse,
@@ -36,7 +37,7 @@ class SettingsStorageError(SettingsServiceError):
 
 class LocalSettingsRepository:
     def __init__(self, storage_path: Path | None = None) -> None:
-        self._storage_path = storage_path or Path(".local/app_settings.json")
+        self._storage_path = storage_path or get_runtime_storage_dir() / "app_settings.json"
 
     def load(self) -> dict[str, Any]:
         if not self._storage_path.exists():
